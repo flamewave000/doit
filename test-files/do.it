@@ -1,0 +1,27 @@
+
+#@@@
+#Root help statement. We want to test it out
+#@@@
+
+build {
+	@@@
+	Build help statement.
+	@@@
+	#$ echo "$0, $1, $2, $3, $4, $5, $6, $7"
+	$ echo "Running Build"
+	$ cargo build
+}
+clean {
+	@@@
+	Clean help statement.
+	@@@
+	$ echo "Running Clean"
+	$ cargo clean
+}
+run {
+	@@@
+	Run help statement.
+	@@@
+	$ echo "Target Run "
+	$ cargo run
+}
