@@ -18,6 +18,7 @@ clean {
 	$ echo "Running Clean"
 	$ cargo clean
 }
+test1: echo hello1
 run {
 	@@@
 	Run help statement.
@@ -25,3 +26,4 @@ run {
 	$ echo "Target Run "
 	$ cargo run
 }
+test2: echo hello2

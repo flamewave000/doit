@@ -34,7 +34,9 @@ impl Parser<'_> {
 
 	fn parse_expression(&mut self) -> Result<Vec<Node>, Error> {
 		let mut nodes: Vec<Node> = vec![];
-		while self.tokenizer.peek_token()?.ttype != TokenType::EOL && self.tokenizer.peek_token()?.ttype != TokenType::EOF {
+		while self.tokenizer.peek_token()?.ttype != TokenType::EOL
+			&& self.tokenizer.peek_token()?.ttype != TokenType::EOF
+		{
 			nodes.push(Node::single(NodeType::SYMBOL, self.tokenizer.next_token()?));
 		}
 		return Ok(nodes);
@@ -59,11 +61,10 @@ impl Parser<'_> {
 					scope.children.push(block);
 				}
 				TokenType::TGT_SLE => {
-					scope
-						.children
-						.push(Node::new(NodeType::TARGET, name, self.parse_expression()?))
+					let script = Node::single(NodeType::SCRIPT, self.tokenizer.next_token()?);
+					scope.children.push(Node::new(NodeType::TARGET, name, vec![script]));
 				}
-				_ => panic!("Encountered unexpected Token"),
+				token => panic!("Encountered unexpected Token: {:?}", token),
 			}
 			break;
 		}
@@ -101,7 +102,10 @@ impl Parser<'_> {
 				)),
 				TokenType::HELP => {
 					if scope.help.is_some() {
-						return Err(Error::new(ErrorKind::Other, "Help block has already been defined for the current scope."));
+						return Err(Error::new(
+							ErrorKind::Other,
+							"Help block has already been defined for the current scope.",
+						));
 					}
 					scope.help = Some(self.tokenizer.next_token()?);
 				}

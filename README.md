@@ -53,10 +53,10 @@ my_target_name {
 }
 ```
 
-You can also create a single line target:
+You can also create a single line target. When you do, the text following the `:` is expected to be a script as if preceded by `$`. Only a script is allowed on a Single Line Target.
 
 ```
-my_target: $ echo "my single line target"
+my_target: echo "my single line target"
 ```
 
 You can have multiple targets defined:

@@ -146,7 +146,9 @@ impl Lexer<'_> {
 			self.consume_and_ignore()?;
 			Ok(Token::sym(TokenType::TGT_END))
 		} else if next == ':' {
-			self.consume_and_ignore()?;
+			// We are swapping the ':' for a '$' to force a script token on the next iteration.
+			// This essentially creates an implicit script tag for SLE targets.
+			self.source[self.index] = '$';
 			Ok(Token::sym(TokenType::TGT_SLE))
 		} else if next == '=' {
 			self.consume_and_ignore()?;

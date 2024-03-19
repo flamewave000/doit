@@ -21,6 +21,7 @@ fn print_help(program_name: &str) {
 	println!();
 	println!("  Options:");
 	println!("    -f         Force recompile of do.it script.");
+	println!("    -t <file>  Provide a file path to the do.it file if not in CWD.");
 	println!();
 	println!("  Dev Options:");
 	println!("    --tokens   Print out the lexical tokens instead of fully compiling.");
@@ -37,6 +38,7 @@ fn main() {
 	let mut print_nodes = false;
 	let mut print_source = false;
 	let mut keep_source = false;
+	let mut filename: String = "./do.it".to_string();
 	while args.len() > 0 && args[0].starts_with('-') {
 		match args.remove(0).as_str() {
 			"-f" => force_recompile = true,
@@ -47,7 +49,8 @@ fn main() {
 			"--help" => {
 				print_help(&program_name);
 				exit(0);
-			}
+			},
+			"-t" => filename = args.remove(0),
 			fail => {
 				log::error(&format!("Unknown option: {}", fail));
 				print_help(&program_name);
@@ -56,12 +59,12 @@ fn main() {
 		}
 	}
 
-	if Path::new("./do.it").exists() == false {
-		log::error("Could not find 'do.it' file in current directory");
+	if Path::new(&filename).exists() == false {
+		log::error(&format!("Could not find '{}' file in current directory", filename));
 		exit(1);
 	}
 	if let Err(err) = compiler::build(
-		"./do.it",
+		&filename,
 		keep_source,
 		force_recompile,
 		if print_tokens {
