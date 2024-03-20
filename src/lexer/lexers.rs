@@ -136,18 +136,18 @@ use super::{read_number, scan_whitespace, Consumer};
 			if value == '\r' {
 				return self.consume();
 			}
-			return Ok(value);
+			Ok(value)
 		}
 		fn consume_and_ignore(&mut self) -> Result<(), String> {
 			let _ = self.consume()?;
-			return Ok(())
+			Ok(())
 		}
 		fn peek(&self) -> Option<char> {
-			return self.source.get(self.index).copied();
+			self.source.get(self.index).copied()
 		}
 		fn look_ahead(&self, ahead: usize) -> Option<char> {
 			if ahead == 0 { panic!("ahead parameter must be greater than zero"); }
-			return self.source.get(self.index + (ahead - 1)).copied();
+			self.source.get(self.index + (ahead - 1)).copied()
 		}
 	}
 	fn res<T, E : std::fmt::Display>(result: Result<T, E>) -> T {

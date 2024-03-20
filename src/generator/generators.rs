@@ -33,17 +33,13 @@ pub fn generate_variable(node: &Node) -> Result<String, Error> {
 			}
 		}
 	}
-	let var_type = if node.children[0].value.ttype == TokenType::LIT_NUM {
-		"double"
-	} else {
-		"::std::string"
-	};
-	return Ok(format!(
+	let var_type = if node.children[0].value.ttype == TokenType::LIT_NUM { "double" } else { "::std::string" };
+	Ok(format!(
 		"{} {} ={};\n",
 		var_type,
 		node.value.value.as_ref().unwrap(),
 		&expression
-	));
+	))
 }
 pub fn generate_script(node: &Node, vars: &[&str]) -> Result<String, Error> {
 	let vars: Vec<String> = vars.iter().map(|var| format!("__VAR({})", *var)).collect();
@@ -76,28 +72,46 @@ mod tests {
 
 	#[test]
 	fn test_generate_variable() -> Result<(), Error> {
-		let mut node = Node::single(NodeType::ASSIGN, Token::val(TokenType::ASSIGN, Some("my_var".to_string())));
-		node.children = vec![Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, Some("42".to_string())))];
+		let mut node = Node::single(
+			NodeType::ASSIGN,
+			Token::val(TokenType::ASSIGN, Some("my_var".to_string())),
+		);
+		node.children = vec![Node::single(
+			NodeType::SYMBOL,
+			Token::val(TokenType::LIT_NUM, Some("42".to_string())),
+		)];
 		let mut result = generate_variable(&node)?;
 		assert_eq!(result, "double my_var = 42;\n");
-		node.children = vec![Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_STR, Some("Hello, world!".to_string())))];
+		node.children = vec![Node::single(
+			NodeType::SYMBOL,
+			Token::val(TokenType::LIT_STR, Some("Hello, world!".to_string())),
+		)];
 		result = generate_variable(&node)?;
 		assert_eq!(result, "::std::string my_var = \"Hello, world!\";\n");
 		node.children = vec![
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, Some("42".to_string()))),
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("+".to_string()))),
-			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("other_var".to_string())))
+			Node::single(
+				NodeType::SYMBOL,
+				Token::val(TokenType::SYMBOL, Some("other_var".to_string())),
+			),
 		];
 		result = generate_variable(&node)?;
 		assert_eq!(result, "double my_var = 42 + other_var;\n");
 		node.children = vec![
-			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_STR, Some("test".to_string()))),
+			Node::single(
+				NodeType::SYMBOL,
+				Token::val(TokenType::LIT_STR, Some("test".to_string())),
+			),
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("+".to_string()))),
-			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("other_var".to_string())))
+			Node::single(
+				NodeType::SYMBOL,
+				Token::val(TokenType::SYMBOL, Some("other_var".to_string())),
+			),
 		];
 		result = generate_variable(&node)?;
 		assert_eq!(result, "::std::string my_var = \"test\" + other_var;\n");
-		return Ok(());
+		Ok(())
 	}
 
 	#[test]
@@ -106,11 +120,17 @@ mod tests {
 			NodeType::SCRIPT,
 			Token::val(TokenType::SCRIPT, Some("echo hello world".to_string())),
 		);
-		let mut result = generate_script(&node, &vec!["var1"])?;
-		assert_eq!(result, "__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", __VARS(__VAR(var1)));\n");
-		result = generate_script(&node, &vec!["var1","var2","var3"])?;
-		assert_eq!(result, "__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", __VARS(__VAR(var1),__VAR(var2),__VAR(var3)));\n");
-		return Ok(());
+		let mut result = generate_script(&node, &["var1"])?;
+		assert_eq!(
+			result,
+			"__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", __VARS(__VAR(var1)));\n"
+		);
+		result = generate_script(&node, &["var1", "var2", "var3"])?;
+		assert_eq!(
+			result,
+			"__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", __VARS(__VAR(var1),__VAR(var2),__VAR(var3)));\n"
+		);
+		Ok(())
 	}
 
 	#[test]
@@ -121,7 +141,7 @@ mod tests {
 		);
 		let node = generate_comment(&node)?;
 		assert_eq!(node, "// comment\n");
-		return Ok(());
+		Ok(())
 	}
 	#[test]
 	fn test_generate_exit() -> Result<(), Error> {
@@ -135,6 +155,6 @@ mod tests {
 		);
 		let node = generate_exit(&node)?;
 		assert_eq!(node, "exit 42;\n");
-		return Ok(());
+		Ok(())
 	}
 }

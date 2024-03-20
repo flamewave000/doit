@@ -147,21 +147,21 @@ mod tests {
 				self.tokens[self.index].0.clone(),
 				self.tokens[self.index].1.clone(),
 			));
-			return Ok(self.garbage.last().unwrap());
+			Ok(self.garbage.last().unwrap())
 		}
 		fn next_token(&mut self) -> Result<crate::lexer::token::Token, std::io::Error> {
 			let token = Token::val(self.tokens[self.index].0.clone(), self.tokens[self.index].1.clone());
 			self.index += 1;
-			return Ok(token);
+			Ok(token)
 		}
 		fn get_filename(&self) -> &str {
-			return "test-do.it";
+			"test-do.it"
 		}
 		fn get_lineno(&self) -> usize {
-			return 0;
+			0
 		}
 		fn get_charno(&self) -> i32 {
-			return 0;
+			0
 		}
 	}
 
@@ -171,7 +171,10 @@ mod tests {
 	}
 	fn check_help(node: Option<&Node>, expected_help: &str) {
 		assert_eq!(node.unwrap().help.as_ref().unwrap().ttype, TokenType::HELP);
-		assert_eq!(node.unwrap().help.as_ref().unwrap().value.as_ref().unwrap(), expected_help);
+		assert_eq!(
+			node.unwrap().help.as_ref().unwrap().value.as_ref().unwrap(),
+			expected_help
+		);
 	}
 
 	#[test]
@@ -207,14 +210,26 @@ mod tests {
 		let root = parser.parse()?;
 		assert_eq!(root.ntype, NodeType::ROOT);
 		check_help(Some(&root), "help1");
-		check_node(root.children.get(0), NodeType::COMMENT, "comment1");
+		check_node(root.children.first(), NodeType::COMMENT, "comment1");
 		check_node(root.children.get(1), NodeType::TARGET, "test1");
 		check_help(root.children.get(1), "\thelp2\t");
-		check_node(root.children.get(1).unwrap().children.get(0), NodeType::SCRIPT, "script1");
-		check_node(root.children.get(1).unwrap().children.get(1), NodeType::COMMENT, "comment2");
+		check_node(
+			root.children.get(1).unwrap().children.first(),
+			NodeType::SCRIPT,
+			"script1",
+		);
+		check_node(
+			root.children.get(1).unwrap().children.get(1),
+			NodeType::COMMENT,
+			"comment2",
+		);
 		check_node(root.children.get(2), NodeType::TARGET, "test2");
 		assert!(root.children.get(2).unwrap().help.is_none());
-		check_node(root.children.get(2).unwrap().children.get(0), NodeType::SCRIPT, "script2");
-		return Ok(());
+		check_node(
+			root.children.get(2).unwrap().children.first(),
+			NodeType::SCRIPT,
+			"script2",
+		);
+		Ok(())
 	}
 }

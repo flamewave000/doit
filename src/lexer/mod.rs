@@ -243,6 +243,6 @@ test2: script2
 		check(lexer.next_token()?, TokenType::SCRIPT, "script2");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::EOF, "");
-		return Ok(());
+		Ok(())
 	}
 }
