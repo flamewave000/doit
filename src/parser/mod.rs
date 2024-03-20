@@ -62,7 +62,15 @@ impl Parser<'_> {
 					let script = Node::single(NodeType::SCRIPT, self.tokenizer.next_token()?);
 					scope.children.push(Node::new(NodeType::TARGET, name, vec![script]));
 				}
-				token => panic!("Encountered unexpected Token: {:?}", token),
+				token => {
+					return Err(self.generate_error(
+						ErrorKind::InvalidData,
+						&format!(
+							"Encountered unexpected Token: {token:?}({})",
+							next.value.unwrap_or("".to_string())
+						),
+					))
+				}
 			}
 			break;
 		}

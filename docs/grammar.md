@@ -2,14 +2,17 @@
 
 ```ini
                Node Definitions
-         Root: [SOF]      [...]     [EOF]
-         Exit: [EXIT]     [EXPR]    [EOL]
-         Help: [HELP_BEG] [...]     [HELP_END]
-       Assign: [NOMEN]    [ASSIGN]  [EXPR] [EOL]
-       Target: [NOMEN]    [TGT_BEG] [...]  [EOL] [TGT_END]
-   SLE Target: [NOMEN]    [TGT_SLE] [EXPR] [EOL]
-       Script: [SCRIPT]   [EXPR]    [EOL]
-      Comment: [COMMENT]  [EXPR]    [EOL]
+         Root: [SOF]         [...]     [EOF]
+         Exit: [EXIT]        [EXPR]    [EOL]
+       Assign: [NOMEN]       [ASSIGN]  [EXPR] [EOL]
+       Target: [NOMEN]       [TGT_BEG] [...]  [EOL] [TGT_END]
+   SLE Target: [NOMEN]       [TGT_SLE] [EXPR] [EOL]
+         Help: [HELP]        [EXPR]    [EOL]
+       Script: [SCRIPT]      [EXPR]    [EOL]
+      Comment: [COMMENT]     [EXPR]    [EOL]
+   Help Block: [HELP_BEG]    [...]     [HELP_END]
+ Script Block: [SCRIPT_BEG]  [...]     [SCRIPT_END]
+Comment Block: [COMMENT_BEG] [...]     [COMMENT_END]
 ```
 
 ## Artifacts
@@ -51,7 +54,7 @@ exit 1+my_result
 
 ### Help Statement
 
-Within a target, you can provide a help block that can be parsed as a special multiline block of text that can be printed for the entire program when a user passes the `-h` or `--help` flags to the program. Help blocks must be the first thing defined, otherwise they will be ignored, and only one will be accepted per scope.
+Within a target, you can provide a help block that can be parsed as a special singleline or multiline block of text that can be printed for the entire program when a user passes the `-h` or `--help` flags to the program. The must only be one Help block per scope or you will get an error.
 
 ```
 @@@
@@ -60,10 +63,14 @@ It is displayed immediately after the usage statement and before the targets sta
 @@@
 
 my_target {
-  @@@
-  This help block will be displayed after this target in the help message.
-  You can use multiple lines as they will all be padded to the right.
-  @@@
+	@@@
+	This help block will be displayed after this target in the help message.
+	You can use multiple lines as they will all be padded to the right.
+	@@@
+}
+
+my_target2 {
+  @ You can also make single line helps
 }
 ```
 
@@ -97,13 +104,26 @@ clean: [EXPR]
 
 ### Script
 
-Script commands are denoted by a single `$` at the start and are run on the system via the C/C++ `system()` call. These are essentially converted to strings. They can contain variables which are used by prefacing the variable name with a single `$` or for better distinction, can be contained within `$(...)`. This is useful if the tail of the variable is beside an alphanumeric character. Arguments passed in from the console can also be accessed using the `$1` style variables.
+Script commands are denoted by a single `$` for single line scripts, or can be surrounded by `$$$` for a script block. These scripts are run on the system via the C/C++ `system()` call. These are essentially converted to raw-strings. They can contain variables which are used by prefacing the variable name with a single `$` or for better distinction, can be contained within `$(...)`. This is useful if the tail of the variable is beside an alphanumeric character. Arguments passed in from the console can also be accessed using the `$1` style variables. If you wish to reference an environment variable, you can use a double `$$` for the variable reference. The double `$$` will be converted to a single `$` when the script is run.
 
-```python
-$ echo "Hello, World!" | cat
-$ echo "My var is: $my_var" > temp.txt
-$ echo "WAZZUP!$(var1)DUDE!"
-$ echo "Args: $1 $2 $3"
+IMPORTANT! Separate script executions do not share environments, so an environment variable set in one is not accessible in another. Please use multiline scripts for such cases.
+
+```sh
+my_target {
+	$ echo "Hello, World!" | cat
+	$ echo "My var is: $my_var" > temp.txt
+
+	$ my_shell_var="not accessible!!"
+	$ echo "this will be blank: $my_shell_var"
+
+	$$$
+	my_shell_var = "accessible!"
+	echo "this will work: $my_shell_var"
+	$$$
+
+	# Note: $0 will be the name of the target being run
+	$ echo "Access command line args: $0 $1 $2 $3"
+}
 ```
 
 ### Comment
