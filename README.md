@@ -11,12 +11,12 @@ So I know you can just use something like a Makefile to build things, but I get 
 ### Self Build
 
 1. Build the project following [Build](#Build)
-1. Link the executable to your usr/bin: `sudo ln -s /path/to/project/target/release/doit /usr/local/bin/doit`
+2. Link the executable to your usr/bin: `sudo ln -s /path/to/project/target/release/doit /usr/local/bin/doit`
 
 ### From Release
 
 1. Download executable.
-1. Copy to `/usr/local/bin` or place somewhere and link it like above.
+2. Copy to `/usr/local/bin` or place somewhere and link it like above.
 
 ## Build
 
@@ -26,6 +26,20 @@ Simple run the following commands in the project folder. Requires no additional 
 | ------------------------------- | -------------------------------------------------------- |
 | Debug build: `cargo build`      | You will find the executable at `./targets/debug/doit`   |
 | Release build: `cargo build -r` | You will find the executable at `./targets/release/doit` |
+
+There is also a `pre-commit.sh` hook script that can be added to your local repo. This replicates the checks performed by the GitHub PRs. You can also simply run the script manually. You can add a sym-link to your git hooks directory:
+
+```sh
+ln -s -f ../../pre-commit.sh .git/hooks/pre-commit
+```
+
+## Contributions
+
+The primary goal of this script is to truly follow the ideology of K.I.S.S. Simplicity and ease of use. Yes this means we lose the advantage of certain advanced features, but that's fine. If your build script needs more complexity, then there are better options out there that you can use like Makefile, NPM, Gulp, etc.
+
+### Formatting
+
+I've included a `rustfmt.toml` file that I follow using VSCode and Rust-Analyser. I also use Cargo-Clippy to check for optimisations and best practices.
 
 ## How to Use
 
