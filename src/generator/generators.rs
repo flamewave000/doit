@@ -55,7 +55,7 @@ pub fn generate_comment(node: &Node) -> Result<String, Error> {
 }
 pub fn generate_exit(node: &Node) -> Result<String, Error> {
 	let expression: Vec<&str> = node.children.iter().map(node_value).collect();
-	Ok(format!("exit {};\n", expression.join(" ")))
+	Ok(format!("exit({});\n", expression.join(" ")))
 }
 
 #[cfg(test)]
@@ -69,45 +69,36 @@ mod tests {
 	};
 
 	use super::generate_exit;
+	fn some(string: &str) -> Option<String> {
+		Some(string.to_string())
+	}
 
 	#[test]
 	fn test_generate_variable() -> Result<(), Error> {
-		let mut node = Node::single(
-			NodeType::ASSIGN,
-			Token::val(TokenType::ASSIGN, Some("my_var".to_string())),
-		);
+		let mut node = Node::single(NodeType::ASSIGN, Token::val(TokenType::ASSIGN, some("my_var")));
 		node.children = vec![Node::single(
 			NodeType::SYMBOL,
-			Token::val(TokenType::LIT_NUM, Some("42".to_string())),
+			Token::val(TokenType::LIT_NUM, some("42")),
 		)];
 		let mut result = generate_variable(&node)?;
 		assert_eq!(result, "double my_var = 42;\n");
 		node.children = vec![Node::single(
 			NodeType::SYMBOL,
-			Token::val(TokenType::LIT_STR, Some("Hello, world!".to_string())),
+			Token::val(TokenType::LIT_STR, some("Hello, world!")),
 		)];
 		result = generate_variable(&node)?;
 		assert_eq!(result, "::std::string my_var = \"Hello, world!\";\n");
 		node.children = vec![
-			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, Some("42".to_string()))),
-			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("+".to_string()))),
-			Node::single(
-				NodeType::SYMBOL,
-				Token::val(TokenType::SYMBOL, Some("other_var".to_string())),
-			),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, some("42"))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("+"))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("other_var"))),
 		];
 		result = generate_variable(&node)?;
 		assert_eq!(result, "double my_var = 42 + other_var;\n");
 		node.children = vec![
-			Node::single(
-				NodeType::SYMBOL,
-				Token::val(TokenType::LIT_STR, Some("test".to_string())),
-			),
-			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("+".to_string()))),
-			Node::single(
-				NodeType::SYMBOL,
-				Token::val(TokenType::SYMBOL, Some("other_var".to_string())),
-			),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_STR, some("test"))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("+"))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("other_var"))),
 		];
 		result = generate_variable(&node)?;
 		assert_eq!(result, "::std::string my_var = \"test\" + other_var;\n");
@@ -118,7 +109,7 @@ mod tests {
 	fn test_generate_script() -> Result<(), Error> {
 		let node = Node::single(
 			NodeType::SCRIPT,
-			Token::val(TokenType::SCRIPT, Some("echo hello world".to_string())),
+			Token::val(TokenType::SCRIPT, some("echo hello world")),
 		);
 		let mut result = generate_script(&node, &["var1"])?;
 		assert_eq!(
@@ -135,26 +126,28 @@ mod tests {
 
 	#[test]
 	fn test_generate_comment() -> Result<(), Error> {
-		let node = Node::single(
-			NodeType::COMMENT,
-			Token::val(TokenType::COMMENT, Some(" comment".to_string())),
-		);
+		let node = Node::single(NodeType::COMMENT, Token::val(TokenType::COMMENT, some(" comment")));
 		let node = generate_comment(&node)?;
 		assert_eq!(node, "// comment\n");
 		Ok(())
 	}
+
 	#[test]
 	fn test_generate_exit() -> Result<(), Error> {
-		let node = Node::new(
-			NodeType::EXIT,
-			Token::sym(TokenType::EXIT),
-			vec![Node::single(
-				NodeType::SYMBOL,
-				Token::val(TokenType::LIT_NUM, Some("42".to_string())),
-			)],
-		);
-		let node = generate_exit(&node)?;
-		assert_eq!(node, "exit 42;\n");
+		let mut node = Node::single(NodeType::EXIT, Token::sym(TokenType::EXIT));
+		node.children = vec![Node::single(
+			NodeType::SYMBOL,
+			Token::val(TokenType::LIT_NUM, some("42")),
+		)];
+		let result = generate_exit(&node)?;
+		assert_eq!(result, "exit(42);\n");
+		node.children = vec![
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("my_var"))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("+"))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, some("21"))),
+		];
+		let result = generate_exit(&node)?;
+		assert_eq!(result, "exit(my_var + 21);\n");
 		Ok(())
 	}
 }

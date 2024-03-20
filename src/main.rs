@@ -49,7 +49,7 @@ fn main() {
 			"--help" => {
 				print_help(&program_name);
 				exit(0);
-			},
+			}
 			"-t" => filename = args.remove(0),
 			fail => {
 				log::error(&format!("Unknown option: {}", fail));
@@ -80,10 +80,20 @@ fn main() {
 		log::error(&err.to_string());
 		exit(1);
 	}
-	if print_tokens || print_nodes || print_source { exit(0); }
+	if print_tokens || print_nodes || print_source {
+		exit(0);
+	}
 
-	match Command::new(".doit/targets").args(&args).output() {
-		Ok(output) => print!("{}{}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr)),
-		Err(err) => log::error(&err.to_string()),
+	let child = Command::new(".doit/targets").args(&args).spawn();
+	if let Err(err) = child {
+		log::error(&err.to_string());
+	} else {
+		match child.unwrap().wait() {
+			Ok(status) => exit(status.code().unwrap_or(if status.success() { 0 } else { 1 })),
+			Err(err) => {
+				log::error(&err.to_string());
+				exit(1);
+			}
+		}
 	}
 }

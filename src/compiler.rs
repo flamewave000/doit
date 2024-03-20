@@ -1,5 +1,9 @@
 use std::{
-	fs::{self, File}, hash::{DefaultHasher, Hash, Hasher}, io::{Error, ErrorKind, Read, Write}, path::Path, process::Command
+	fs::{self, File},
+	hash::{DefaultHasher, Hash, Hasher},
+	io::{Error, ErrorKind, Read, Write},
+	path::Path,
+	process::Command,
 };
 
 use crate::{
@@ -70,10 +74,10 @@ fn compile(source: &str) -> Result<(), Error> {
 		file.flush()?;
 	}
 
-	let output = Command::new("g++").args(["--std=c++20", cpp, "-o", "./.doit/targets"]).output()?;
-	if !output.status.success() {
-		let stderr = String::from_utf8_lossy(&output.stderr);
-		stderr.split('\n').for_each(log::error);
+	let mut output = Command::new("g++")
+		.args(["--std=c++20", cpp, "-o", "./.doit/targets"])
+		.spawn()?;
+	if !output.wait()?.success() {
 		return Err(Error::new(ErrorKind::Other, "Failed to compile"));
 	}
 	Ok(())
