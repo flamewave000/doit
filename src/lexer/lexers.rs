@@ -13,9 +13,9 @@ pub fn scan_whitespace(consumer: &mut dyn Consumer) -> Result<(), String> {
 		if next == '\n' || !next.is_whitespace() {
 			break;
 		}
-		let _ = consumer.consume_and_ignore()?;
+		consumer.consume_and_ignore()?;
 	}
-	return Ok(());
+	Ok(())
 }
 
 pub fn conditional_reader(consumer: &mut dyn Consumer, predicate: fn(&char) -> bool) -> Result<Vec<char>, String> {
@@ -27,15 +27,15 @@ pub fn conditional_reader(consumer: &mut dyn Consumer, predicate: fn(&char) -> b
 		}
 		chars.push(consumer.consume()?);
 	}
-	return Ok(chars);
+	Ok(chars)
 }
 
 pub fn read_number(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
-	return conditional_reader(consumer, is_number);
+	conditional_reader(consumer, is_number)
 }
 
 pub fn read_nomenclature(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
-	return conditional_reader(consumer, |c| is_nomenclature(c, false));
+	conditional_reader(consumer, |c| is_nomenclature(c, false))
 }
 
 pub fn read_string(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
@@ -60,14 +60,14 @@ pub fn read_string(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 pub fn read_comment(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 	// ignore the first '#' character
 	consumer.consume_and_ignore()?;
-	return conditional_reader(consumer, |x| *x != '\n');
+	conditional_reader(consumer, |x| *x != '\n')
 }
 
 pub fn read_script(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 	// ignore the first '$' character
 	consumer.consume_and_ignore()?;
 	scan_whitespace(consumer)?;
-	return conditional_reader(consumer, |x| *x != '\n');
+	conditional_reader(consumer, |x| *x != '\n')
 }
 
 pub fn read_help_block(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
@@ -109,7 +109,7 @@ pub fn read_help_block(consumer: &mut dyn Consumer) -> Result<Vec<char>, String>
 	if let Some(index) = result.iter().rposition(|x| *x == '\n') {
 		result.remove(index);
 	}
-	return Ok(result);
+	Ok(result)
 }
 
 
@@ -151,7 +151,7 @@ use super::{read_number, scan_whitespace, Consumer};
 		}
 	}
 	fn res<T, E : std::fmt::Display>(result: Result<T, E>) -> T {
-		return match result {
+		match result {
 			Ok(v) => v,
 			Err(err) => panic!("{:?}", err.to_string())
 		}

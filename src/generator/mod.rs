@@ -1,4 +1,4 @@
-use std::io::{Error, ErrorKind};
+use std::{fmt::Write, io::{Error, ErrorKind}};
 
 use crate::parser::{
 	nodes::{Node, NodeType},
@@ -16,8 +16,9 @@ pub struct Generator<'generator> {
 
 impl Generator<'_> {
 	pub fn new<'new>(parser: &'new mut Parser<'new>) -> Generator<'new> {
-		return Generator::<'new> { parser };
+		Generator::<'new> { parser }
 	}
+	#[allow(clippy::only_used_in_recursion)]
 	fn generate_scope(
 		&mut self,
 		indent: &str,
@@ -71,7 +72,7 @@ impl Generator<'_> {
 				NodeType::SYMBOL => continue,
 			}
 		}
-		return Ok(result);
+		Ok(result)
 	}
 
 	pub fn generate(&mut self) -> Result<String, Error> {
@@ -80,7 +81,7 @@ impl Generator<'_> {
 		let root_node = self.parser.parse()?;
 
 		// Generate the definitions
-		let definitions = self.generate_scope("\t", &root_node.children, &vec![], &mut targets)?;
+		let definitions = self.generate_scope("\t", &root_node.children, &[], &mut targets)?;
 		source = source.replace("{{{TARGET_DEFINITIONS}}}", &definitions);
 
 		// Generate the help
@@ -92,8 +93,10 @@ impl Generator<'_> {
 
 		let help_text = targets
 			.iter()
-			.map(|(tgt, help)| format!("\n\t\t__HELP({}, R\"__DOIT__({})__DOIT__\"),", tgt, help))
-			.collect::<String>();
+			.fold(String::new(), |mut output: String, (tgt, help)| {
+				let _ = write!(output, "\n\t\t__HELP({}, R\"__DOIT__({})__DOIT__\"),", tgt, help);
+				output
+			});
 		source = source.replace("{{{TARGET_HELPS}}}", &help_text);
 
 		// Generate Target Matches
@@ -101,10 +104,12 @@ impl Generator<'_> {
 			"{{{TARGET_MATCHES}}}",
 			&targets
 				.iter()
-				.map(|tgt| format!("\n\t__MATCH({});", tgt.0))
-				.collect::<String>(),
+				.fold(String::new(), |mut output: String, tgt: &(String, String)| {
+					let _ = write!(output, "\n\t__MATCH({});", tgt.0);
+					output
+				}),
 		);
 
-		return Ok(sources::DOIT_HEADER.to_string() + &source);
+		Ok(sources::DOIT_HEADER.to_string() + &source)
 	}
 }

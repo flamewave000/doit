@@ -12,7 +12,7 @@ use crate::{
 	utils::log,
 };
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(PartialEq)]
 pub enum CompileMode {
 	NORMAL,
@@ -59,12 +59,11 @@ pub fn build(filename: &str, keep: bool, force: bool, mode: CompileMode) -> Resu
 	if !keep {
 		let _ = fs::remove_file(".doit/targets.cpp");
 	}
-
-	return Ok(());
+	Ok(())
 }
 
 fn compile(source: &str) -> Result<(), Error> {
-	let cpp: &str = &("./.doit/targets.cpp");
+	let cpp: &str = "./.doit/targets.cpp";
 	{
 		let mut file = File::create(cpp)?;
 		file.write_all(source.as_bytes())?;
@@ -77,7 +76,7 @@ fn compile(source: &str) -> Result<(), Error> {
 		stderr.split('\n').for_each(log::error);
 		return Err(Error::new(ErrorKind::Other, "Failed to compile"));
 	}
-	return Ok(());
+	Ok(())
 }
 
 fn print_tokens(lexer: &mut Lexer) {
