@@ -50,11 +50,9 @@ impl Parser<'_> {
 				// Ignore EOL tokens that occur between the NOMEN and the next token
 				TokenType::EOL => continue,
 				TokenType::EOF => return Err(self.generate_error(ErrorKind::UnexpectedEof, "Unexpected end of file")),
-				TokenType::ASSIGN => {
-					scope
-						.children
-						.push(Node::new(NodeType::ASSIGN, name, self.parse_expression()?))
-				}
+				TokenType::ASSIGN => scope
+					.children
+					.push(Node::new(NodeType::ASSIGN, name, self.parse_expression()?)),
 				TokenType::TGT_BEG => {
 					let mut block = Node::single(NodeType::TARGET, name);
 					self.parse_scope(&mut block)?;
@@ -125,5 +123,98 @@ impl Parser<'_> {
 		let mut root_node = Node::single(NodeType::ROOT, root_token);
 		self.parse_scope(&mut root_node)?;
 		return Ok(root_node);
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use std::io::Error;
+
+	use crate::{
+		lexer::token::{Token, TokenType, Tokenizer},
+		parser::nodes::NodeType,
+	};
+
+	use super::{nodes::Node, Parser};
+	struct MockTockenizer {
+		garbage: Vec<Token>,
+		pub tokens: Vec<(TokenType, Option<String>)>,
+		pub index: usize,
+	}
+	impl Tokenizer for MockTockenizer {
+		fn peek_token(&mut self) -> Result<&crate::lexer::token::Token, std::io::Error> {
+			self.garbage.push(Token::val(
+				self.tokens[self.index].0.clone(),
+				self.tokens[self.index].1.clone(),
+			));
+			return Ok(self.garbage.last().unwrap());
+		}
+		fn next_token(&mut self) -> Result<crate::lexer::token::Token, std::io::Error> {
+			let token = Token::val(self.tokens[self.index].0.clone(), self.tokens[self.index].1.clone());
+			self.index += 1;
+			return Ok(token);
+		}
+		fn get_filename(&self) -> &str {
+			return "test-do.it";
+		}
+		fn get_lineno(&self) -> usize {
+			return 0;
+		}
+		fn get_charno(&self) -> i32 {
+			return 0;
+		}
+	}
+
+	fn check_node(node: Option<&Node>, expected_ntype: NodeType, expected_value: &str) {
+		assert_eq!(node.unwrap().ntype, expected_ntype);
+		assert_eq!(node.unwrap().value.value.as_ref().unwrap(), expected_value);
+	}
+	fn check_help(node: Option<&Node>, expected_help: &str) {
+		assert_eq!(node.unwrap().help.as_ref().unwrap().ttype, TokenType::HELP);
+		assert_eq!(node.unwrap().help.as_ref().unwrap().value.as_ref().unwrap(), expected_help);
+	}
+
+	#[test]
+	fn test_parser() -> Result<(), Error> {
+		let mut mock_tockenizer = MockTockenizer {
+			garbage: vec![],
+			index: 0,
+			tokens: vec![
+				(TokenType::SOF, None),
+				(TokenType::HELP, Some("help1".to_string())),
+				(TokenType::EOL, None),
+				(TokenType::COMMENT, Some("comment1".to_string())),
+				(TokenType::EOL, None),
+				(TokenType::NOMEN, Some("test1".to_string())),
+				(TokenType::TGT_BEG, None),
+				(TokenType::EOL, None),
+				(TokenType::HELP, Some("\thelp2\t".to_string())),
+				(TokenType::EOL, None),
+				(TokenType::SCRIPT, Some("script1".to_string())),
+				(TokenType::EOL, None),
+				(TokenType::COMMENT, Some("comment2".to_string())),
+				(TokenType::EOL, None),
+				(TokenType::TGT_END, None),
+				(TokenType::EOL, None),
+				(TokenType::NOMEN, Some("test2".to_string())),
+				(TokenType::TGT_SLE, None),
+				(TokenType::SCRIPT, Some("script2".to_string())),
+				(TokenType::EOL, None),
+				(TokenType::EOF, None),
+			],
+		};
+		let mut parser = Parser::new(&mut mock_tockenizer);
+		let root = parser.parse()?;
+		assert_eq!(root.ntype, NodeType::ROOT);
+		check_help(Some(&root), "help1");
+		check_node(root.children.get(0), NodeType::COMMENT, "comment1");
+		check_node(root.children.get(1), NodeType::TARGET, "test1");
+		check_help(root.children.get(1), "\thelp2\t");
+		check_node(root.children.get(1).unwrap().children.get(0), NodeType::SCRIPT, "script1");
+		check_node(root.children.get(1).unwrap().children.get(1), NodeType::COMMENT, "comment2");
+		check_node(root.children.get(2), NodeType::TARGET, "test2");
+		assert!(root.children.get(2).unwrap().help.is_none());
+		check_node(root.children.get(2).unwrap().children.get(0), NodeType::SCRIPT, "script2");
+		return Ok(());
 	}
 }

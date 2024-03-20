@@ -2,7 +2,7 @@ use core::fmt;
 use std::io::Error;
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
 	SOF,     // Start of File
 	EOF,     // \0

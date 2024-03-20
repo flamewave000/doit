@@ -1,5 +1,3 @@
-use std::io::Error;
-
 use super::validation::{is_nomenclature, is_number};
 
 pub trait Consumer {
@@ -9,13 +7,13 @@ pub trait Consumer {
 	fn look_ahead(&self, ahead: usize) -> Option<char>;
 }
 
-pub fn scan_whitespace(consumer: &mut dyn Consumer) -> Result<(), Error> {
+pub fn scan_whitespace(consumer: &mut dyn Consumer) -> Result<(), String> {
 	loop {
 		let next = consumer.peek().unwrap_or('\0');
 		if next == '\n' || !next.is_whitespace() {
 			break;
 		}
-		let _ = consumer.consume_and_ignore();
+		let _ = consumer.consume_and_ignore()?;
 	}
 	return Ok(());
 }
@@ -64,9 +62,11 @@ pub fn read_comment(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 	consumer.consume_and_ignore()?;
 	return conditional_reader(consumer, |x| *x != '\n');
 }
+
 pub fn read_script(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 	// ignore the first '$' character
 	consumer.consume_and_ignore()?;
+	scan_whitespace(consumer)?;
 	return conditional_reader(consumer, |x| *x != '\n');
 }
 
@@ -110,4 +110,87 @@ pub fn read_help_block(consumer: &mut dyn Consumer) -> Result<Vec<char>, String>
 		result.remove(index);
 	}
 	return Ok(result);
+}
+
+
+#[cfg(test)]
+mod tests {
+	use crate::lexer::lexers::{read_comment, read_help_block, read_nomenclature, read_script, read_string};
+
+use super::{read_number, scan_whitespace, Consumer};
+
+	struct MockConsumer {
+		pub index: usize,
+		pub source: Vec<char>
+	}
+	impl MockConsumer {
+		pub fn new(source: &str) -> MockConsumer { return MockConsumer{index:0, source: source.chars().collect()} }
+	}
+	impl Consumer for MockConsumer {
+		fn consume(&mut self) -> Result<char, String> {
+			if self.index >= self.source.len() {
+				return Err("End of file".to_string());
+			}
+			let value = *self.source.get(self.index).unwrap();
+			self.index += 1;
+			if value == '\r' {
+				return self.consume();
+			}
+			return Ok(value);
+		}
+		fn consume_and_ignore(&mut self) -> Result<(), String> {
+			let _ = self.consume()?;
+			return Ok(())
+		}
+		fn peek(&self) -> Option<char> {
+			return self.source.get(self.index).copied();
+		}
+		fn look_ahead(&self, ahead: usize) -> Option<char> {
+			if ahead == 0 { panic!("ahead parameter must be greater than zero"); }
+			return self.source.get(self.index + (ahead - 1)).copied();
+		}
+	}
+	fn res<T, E : std::fmt::Display>(result: Result<T, E>) -> T {
+		return match result {
+			Ok(v) => v,
+			Err(err) => panic!("{:?}", err.to_string())
+		}
+	}
+
+	fn run_test(target: fn(&mut dyn Consumer) -> Result<Vec<char>, String>, test_data: &str, expected: &str) {
+		let mut consumer = MockConsumer::new(test_data);
+		let number: String = res(target(&mut consumer)).iter().collect();
+		assert_eq!(number, expected);
+	}
+
+	#[test]
+	fn test_scan_whitespace() {
+		let mut consumer = MockConsumer::new("   abc");
+		res(scan_whitespace(&mut consumer));
+		assert_eq!(consumer.index, 3);
+	}
+	#[test]
+	fn test_read_number() {
+		run_test(read_number, "1234   ", "1234");
+	}
+	#[test]
+	fn test_read_nomenclature() {
+		run_test(read_nomenclature, "my_target {{", "my_target");
+	}
+	#[test]
+	fn test_read_string() {
+		run_test(read_string, "\"Hello, world!\"\n", "Hello, world!");
+	}
+	#[test]
+	fn test_read_comment() {
+		run_test(read_comment, "# everything to the end   \n", " everything to the end   ");
+	}
+	#[test]
+	fn test_read_script() {
+		run_test(read_script, "$ echo 1234 | cat  \n", "echo 1234 | cat  ");
+	}
+	#[test]
+	fn test_read_help_block() {
+		run_test(read_help_block, "@@@\n Everything in here\n@@@ nothing here   ", " Everything in here");
+	}
 }

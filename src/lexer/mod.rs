@@ -44,13 +44,15 @@ impl Consumer for Lexer<'_> {
 	}
 	fn consume_and_ignore(&mut self) -> Result<(), String> {
 		let _ = self.consume()?;
-		return Ok(())
+		return Ok(());
 	}
 	fn peek(&self) -> Option<char> {
 		return self.source.get(self.index).copied();
 	}
 	fn look_ahead(&self, ahead: usize) -> Option<char> {
-		if ahead == 0 { panic!("ahead parameter must be greater than zero"); }
+		if ahead == 0 {
+			panic!("ahead parameter must be greater than zero");
+		}
 		return self.source.get(self.index + (ahead - 1)).copied();
 	}
 }
@@ -108,7 +110,9 @@ impl Lexer<'_> {
 			self.first = false;
 			return Ok(Token::sym(TokenType::SOF));
 		}
-		scan_whitespace(self)?;
+		if let Err(err) = scan_whitespace(self) {
+			return self.generate_error(ErrorKind::InvalidData, &err);
+		}
 		let next = match self.peek() {
 			Some(v) => v,
 			None => return Ok(Token::sym(TokenType::EOF)),
@@ -188,5 +192,57 @@ impl Tokenizer for Lexer<'_> {
 			Some(t) => Ok(t),
 			None => self.consume_token(),
 		};
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::lexer::token::TokenType;
+
+use super::{token::{Token, Tokenizer}, Lexer};
+	use std::io::Error;
+
+	fn check(token: Token, expected_type: TokenType, expected_value: &str) {
+		assert_eq!(token.ttype, expected_type);
+		assert_eq!(token.value.unwrap_or("".to_string()).as_str(), expected_value);
+	}
+
+	#[test]
+	fn test_lexer() -> Result<(), Error> {
+		let mut lexer = Lexer::new("test-source.it", r"@@@
+help1
+@@@
+# comment1
+test1 {
+	@@@
+	help2
+	@@@
+	$ script1
+	# comment2
+}
+test2: script2
+");
+		check(lexer.next_token()?, TokenType::SOF, "");
+		check(lexer.next_token()?, TokenType::HELP, "help1");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::COMMENT, " comment1");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::NOMEN, "test1");
+		check(lexer.next_token()?, TokenType::TGT_BEG, "");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::HELP, "\thelp2\t");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::SCRIPT, "script1");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::COMMENT, " comment2");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::TGT_END, "");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::NOMEN, "test2");
+		check(lexer.next_token()?, TokenType::TGT_SLE, "");
+		check(lexer.next_token()?, TokenType::SCRIPT, "script2");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::EOF, "");
+		return Ok(());
 	}
 }
