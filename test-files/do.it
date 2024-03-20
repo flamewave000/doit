@@ -1,29 +1,30 @@
 
-#@@@
-#Root help statement. We want to test it out
-#@@@
+@ Root help statement. We want to test it out
 
-build {
+global_var = 42
+
+target1 {
 	@@@
-	Build help statement.
+	Multiline help statement.
 	@@@
-	#$ echo "$0, $1, $2, $3, $4, $5, $6, $7"
-	$ echo "Running Build"
-	$ cargo build
+
+	my_var = "Local string variable"
+	$ echo "$my_var"
 }
-clean {
-	@@@
-	Clean help statement.
-	@@@
-	$ echo "Running Clean"
-	$ cargo clean
+target2 {
+	# single line comment
+	$ echo "Single line script"
 }
-test1: echo hello1
-run {
-	@@@
-	Run help statement.
-	@@@
-	$ echo "Target Run "
-	$ cargo run
+target3: echo "single line target"
+
+###
+Multiline comment
+###
+
+target4 {
+	$$$
+	my_var="Multiline script statement"
+	echo "$$my_var"
+	echo "$global_var"
+	$$$
 }
-test2: echo hello2

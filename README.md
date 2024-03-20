@@ -43,6 +43,8 @@ I've included a `rustfmt.toml` file that I follow using VSCode and Rust-Analyser
 
 ## How to Use
 
+### [Read: In-Depth DOIT Grammer](docs/grammar.md)
+
 In your project folder, create a file called `./do.it`. This file will looked for by the program.
 
 This script contains a very basic set of features which is made up of statements and targets.

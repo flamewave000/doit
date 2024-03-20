@@ -1,4 +1,7 @@
-use super::validation::{is_nomenclature, is_number};
+use super::{
+	token::TokenType,
+	validation::{is_nomenclature, is_number},
+};
 
 pub trait Consumer {
 	fn consume(&mut self) -> Result<char, String>;
@@ -57,20 +60,7 @@ pub fn read_string(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 	}
 }
 
-pub fn read_comment(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
-	// ignore the first '#' character
-	consumer.consume_and_ignore()?;
-	conditional_reader(consumer, |x| *x != '\n')
-}
-
-pub fn read_script(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
-	// ignore the first '$' character
-	consumer.consume_and_ignore()?;
-	scan_whitespace(consumer)?;
-	conditional_reader(consumer, |x| *x != '\n')
-}
-
-pub fn read_help_block(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
+fn read_delimited_block(consumer: &mut dyn Consumer, delimiter: char, ttype: TokenType) -> Result<Vec<char>, String> {
 	consumer.consume_and_ignore()?;
 	consumer.consume_and_ignore()?;
 	consumer.consume_and_ignore()?;
@@ -81,23 +71,23 @@ pub fn read_help_block(consumer: &mut dyn Consumer) -> Result<Vec<char>, String>
 	match consumer.peek() {
 		Some(next) => {
 			if next != '\n' {
-				return Err(
-					"Did not find EOL. Help block symbols must not be followed by any other content".to_string(),
-				);
+				return Err(format!(
+					"Did not find EOL. {ttype:?} block symbols must not be followed by any other content"
+				));
 			}
 			consumer.consume_and_ignore()?;
 		}
-		None => return Err("Unexpected EOF when expecting help text".to_string()),
+		None => return Err(format!("Unexpected EOF when expecting {ttype:?} block text")),
 	}
 
 	let mut result: Vec<char> = vec![];
 	let mut current: char;
 	loop {
 		current = consumer.consume()?;
-		if current == '@' {
+		if current == delimiter {
 			let la2 = consumer.look_ahead(1);
 			let la3 = consumer.look_ahead(2);
-			if la2.is_some() && la2.unwrap() == '@' && la3.is_some() && la3.unwrap() == '@' {
+			if la2.is_some() && la2.unwrap() == delimiter && la3.is_some() && la3.unwrap() == delimiter {
 				consumer.consume_and_ignore()?;
 				consumer.consume_and_ignore()?;
 				break;
@@ -105,26 +95,56 @@ pub fn read_help_block(consumer: &mut dyn Consumer) -> Result<Vec<char>, String>
 		}
 		result.push(current);
 	}
-	// Remove the last newline character 
+	// Remove the last newline character
 	if let Some(index) = result.iter().rposition(|x| *x == '\n') {
 		result.remove(index);
 	}
 	Ok(result)
 }
 
+pub fn read_comment(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
+	if consumer.look_ahead(1).unwrap_or('\0') == '#' && consumer.look_ahead(2).unwrap_or('\0') == '#' {
+		return read_delimited_block(consumer, '#', TokenType::SCRIPT);
+	}
+	// ignore the first '#' character
+	consumer.consume_and_ignore()?;
+	conditional_reader(consumer, |x| *x != '\n')
+}
+
+pub fn read_script(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
+	if consumer.look_ahead(1).unwrap_or('\0') == '$' && consumer.look_ahead(2).unwrap_or('\0') == '$' {
+		return read_delimited_block(consumer, '$', TokenType::SCRIPT);
+	}
+	// ignore the first '$' character
+	consumer.consume_and_ignore()?;
+	scan_whitespace(consumer)?;
+	conditional_reader(consumer, |x| *x != '\n')
+}
+
+pub fn read_help_block(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
+	if consumer.look_ahead(1).unwrap_or('\0') == '@' && consumer.look_ahead(2).unwrap_or('\0') == '@' {
+		return read_delimited_block(consumer, '@', TokenType::HELP);
+	}
+	// ignore the first '$' character
+	consumer.consume_and_ignore()?;
+	scan_whitespace(consumer)?;
+	conditional_reader(consumer, |x| *x != '\n')
+}
 
 #[cfg(test)]
 mod tests {
 	use crate::lexer::lexers::{read_comment, read_help_block, read_nomenclature, read_script, read_string};
 
-use super::{read_number, scan_whitespace, Consumer};
+	use super::{read_number, scan_whitespace, Consumer};
 
 	struct MockConsumer {
 		pub index: usize,
-		pub source: Vec<char>
+		pub source: Vec<char>,
 	}
 	impl MockConsumer {
-		pub fn new(source: &str) -> MockConsumer { return MockConsumer{index:0, source: source.chars().collect()} }
+		pub fn new(source: &str) -> MockConsumer {
+			return MockConsumer { index: 0, source: source.chars().collect() };
+		}
 	}
 	impl Consumer for MockConsumer {
 		fn consume(&mut self) -> Result<char, String> {
@@ -146,21 +166,22 @@ use super::{read_number, scan_whitespace, Consumer};
 			self.source.get(self.index).copied()
 		}
 		fn look_ahead(&self, ahead: usize) -> Option<char> {
-			if ahead == 0 { panic!("ahead parameter must be greater than zero"); }
+			if ahead == 0 {
+				panic!("ahead parameter must be greater than zero");
+			}
 			self.source.get(self.index + (ahead - 1)).copied()
 		}
 	}
-	fn res<T, E : std::fmt::Display>(result: Result<T, E>) -> T {
+	fn res<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
 		match result {
 			Ok(v) => v,
-			Err(err) => panic!("{:?}", err.to_string())
+			Err(err) => panic!("{:?}", err.to_string()),
 		}
 	}
 
-	fn run_test(target: fn(&mut dyn Consumer) -> Result<Vec<char>, String>, test_data: &str, expected: &str) {
+	fn run_test(target: fn(&mut dyn Consumer) -> Result<Vec<char>, String>, test_data: &str) -> String {
 		let mut consumer = MockConsumer::new(test_data);
-		let number: String = res(target(&mut consumer)).iter().collect();
-		assert_eq!(number, expected);
+		res(target(&mut consumer)).iter().collect()
 	}
 
 	#[test]
@@ -171,26 +192,47 @@ use super::{read_number, scan_whitespace, Consumer};
 	}
 	#[test]
 	fn test_read_number() {
-		run_test(read_number, "1234   ", "1234");
+		assert_eq!(run_test(read_number, "1234   "), "1234");
 	}
 	#[test]
 	fn test_read_nomenclature() {
-		run_test(read_nomenclature, "my_target {{", "my_target");
+		assert_eq!(run_test(read_nomenclature, "my_target {{"), "my_target");
 	}
 	#[test]
 	fn test_read_string() {
-		run_test(read_string, "\"Hello, world!\"\n", "Hello, world!");
+		assert_eq!(run_test(read_string, "\"Hello, world!\"\n"), "Hello, world!");
 	}
 	#[test]
 	fn test_read_comment() {
-		run_test(read_comment, "# everything to the end   \n", " everything to the end   ");
+		assert_eq!(
+			run_test(read_comment, "# everything to the end   \n"),
+			" everything to the end   ",
+		);
+		assert_eq!(
+			run_test(read_comment, "###\n Everything in here\n### nothing here   "),
+			" Everything in here",
+		);
 	}
 	#[test]
 	fn test_read_script() {
-		run_test(read_script, "$ echo 1234 | cat  \n", "echo 1234 | cat  ");
+		assert_eq!(run_test(read_script, "$ echo 1234 | cat  \n"), "echo 1234 | cat  ");
+		assert_eq!(
+			run_test(
+				read_script,
+				"$$$\necho 1234 | cat\necho hello world\n$$$\n nothing here   "
+			),
+			"echo 1234 | cat\necho hello world",
+		);
 	}
 	#[test]
 	fn test_read_help_block() {
-		run_test(read_help_block, "@@@\n Everything in here\n@@@ nothing here   ", " Everything in here");
+		assert_eq!(
+			run_test(read_help_block, "@ everything to the end   \n"),
+			"everything to the end   ",
+		);
+		assert_eq!(
+			run_test(read_help_block, "@@@\n Everything in here\n@@@ nothing here   "),
+			" Everything in here",
+		);
 	}
 }
