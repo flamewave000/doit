@@ -176,6 +176,9 @@ mod tests {
 			expected_help
 		);
 	}
+	fn some(string: &str) -> Option<String> {
+		Some(string.to_string())
+	}
 
 	#[test]
 	fn test_parser() -> Result<(), Error> {
@@ -184,24 +187,24 @@ mod tests {
 			index: 0,
 			tokens: vec![
 				(TokenType::SOF, None),
-				(TokenType::HELP, Some("help1".to_string())),
+				(TokenType::HELP, some("help1")),
 				(TokenType::EOL, None),
-				(TokenType::COMMENT, Some("comment1".to_string())),
+				(TokenType::COMMENT, some("comment1")),
 				(TokenType::EOL, None),
-				(TokenType::NOMEN, Some("test1".to_string())),
+				(TokenType::NOMEN, some("test1")),
 				(TokenType::TGT_BEG, None),
 				(TokenType::EOL, None),
-				(TokenType::HELP, Some("\thelp2\t".to_string())),
+				(TokenType::HELP, some("\thelp2\t")),
 				(TokenType::EOL, None),
-				(TokenType::SCRIPT, Some("script1".to_string())),
+				(TokenType::SCRIPT, some("script1")),
 				(TokenType::EOL, None),
-				(TokenType::COMMENT, Some("comment2".to_string())),
+				(TokenType::COMMENT, some("comment2")),
 				(TokenType::EOL, None),
 				(TokenType::TGT_END, None),
 				(TokenType::EOL, None),
-				(TokenType::NOMEN, Some("test2".to_string())),
+				(TokenType::NOMEN, some("test2")),
 				(TokenType::TGT_SLE, None),
-				(TokenType::SCRIPT, Some("script2".to_string())),
+				(TokenType::SCRIPT, some("script2")),
 				(TokenType::EOL, None),
 				(TokenType::EOF, None),
 			],
