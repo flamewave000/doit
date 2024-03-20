@@ -11,11 +11,11 @@ pub struct Parser<'parser> {
 }
 
 impl Parser<'_> {
-	pub fn new<'new>(tokenizer: &'new mut dyn Tokenizer) -> Parser<'new> {
-		return Parser { tokenizer };
+	pub fn new(tokenizer: &mut dyn Tokenizer) -> Parser<'_> {
+		Parser { tokenizer }
 	}
 	fn generate_error(&self, error_kind: ErrorKind, message: &str) -> Error {
-		return Error::new(
+		Error::new(
 			error_kind,
 			format!(
 				"{}:{}:{} > {message}",
@@ -23,13 +23,13 @@ impl Parser<'_> {
 				self.tokenizer.get_lineno(),
 				self.tokenizer.get_charno()
 			),
-		);
+		)
 	}
 	fn handle_error(&self, read: Result<Node, Error>) -> Result<Node, Error> {
-		return match read {
+		match read {
 			Ok(v) => Ok(v),
 			Err(e) => Err(self.generate_error(ErrorKind::InvalidData, &e.to_string())),
-		};
+		}
 	}
 
 	fn parse_expression(&mut self) -> Result<Vec<Node>, Error> {
@@ -39,7 +39,7 @@ impl Parser<'_> {
 		{
 			nodes.push(Node::single(NodeType::SYMBOL, self.tokenizer.next_token()?));
 		}
-		return Ok(nodes);
+		Ok(nodes)
 	}
 
 	fn parse_nomenclature(&mut self, scope: &mut Node) -> Result<(), Error> {
@@ -66,7 +66,7 @@ impl Parser<'_> {
 			}
 			break;
 		}
-		return Ok(());
+		Ok(())
 	}
 
 	fn parse_scope(&mut self, scope: &mut Node) -> Result<(), Error> {
@@ -122,7 +122,7 @@ impl Parser<'_> {
 		}
 		let mut root_node = Node::single(NodeType::ROOT, root_token);
 		self.parse_scope(&mut root_node)?;
-		return Ok(root_node);
+		Ok(root_node)
 	}
 }
 

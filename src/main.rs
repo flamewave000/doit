@@ -39,7 +39,7 @@ fn main() {
 	let mut print_source = false;
 	let mut keep_source = false;
 	let mut filename: String = "./do.it".to_string();
-	while args.len() > 0 && args[0].starts_with('-') {
+	while !args.is_empty() && args[0].starts_with('-') {
 		match args.remove(0).as_str() {
 			"-f" => force_recompile = true,
 			"--tokens" => print_tokens = true,
@@ -59,7 +59,7 @@ fn main() {
 		}
 	}
 
-	if Path::new(&filename).exists() == false {
+	if !Path::new(&filename).exists() {
 		log::error(&format!("Could not find '{}' file in current directory", filename));
 		exit(1);
 	}

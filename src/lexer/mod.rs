@@ -40,55 +40,55 @@ impl Consumer for Lexer<'_> {
 			self.col = 0;
 			self.row += 1;
 		}
-		return Ok(value);
+		Ok(value)
 	}
 	fn consume_and_ignore(&mut self) -> Result<(), String> {
 		let _ = self.consume()?;
-		return Ok(());
+		Ok(())
 	}
 	fn peek(&self) -> Option<char> {
-		return self.source.get(self.index).copied();
+		self.source.get(self.index).copied()
 	}
 	fn look_ahead(&self, ahead: usize) -> Option<char> {
 		if ahead == 0 {
 			panic!("ahead parameter must be greater than zero");
 		}
-		return self.source.get(self.index + (ahead - 1)).copied();
+		self.source.get(self.index + (ahead - 1)).copied()
 	}
 }
 
 impl Lexer<'_> {
 	pub fn new<'new>(filename: &'new str, source: &'new str) -> Lexer<'new> {
-		return Lexer {
-			filename: filename,
+		Lexer {
+			filename,
 			index: 0,
 			source: source.chars().collect(),
 			row: 1,
 			col: 0,
 			peeked_token: None,
 			first: true,
-		};
+		}
 	}
 
 	fn consume_and_ignore(&mut self) -> Result<(), Error> {
-		return match self.consume() {
+		match self.consume() {
 			Ok(_) => Ok(()),
 			Err(err) => Err(Error::new(ErrorKind::Other, err)),
-		};
+		}
 	}
 
 	fn generate_error<T>(&self, error_kind: ErrorKind, message: &str) -> Result<T, Error> {
-		return Err(Error::new(
+		Err(Error::new(
 			error_kind,
 			format!("{}:{}:{} > {message}", self.filename, self.row, self.col),
-		));
+		))
 	}
 
 	fn peek_next(&self) -> Option<char> {
 		if self.index >= self.source.len() {
 			return None;
 		}
-		return Some(self.source[self.index + 1]);
+		Some(self.source[self.index + 1])
 	}
 
 	fn put_back(&mut self) {
@@ -99,10 +99,10 @@ impl Lexer<'_> {
 	}
 
 	fn handle_error(&self, read: Result<Vec<char>, String>) -> Result<String, Error> {
-		return match read {
+		match read {
 			Ok(v) => Ok(v.iter().collect()),
 			Err(e) => self.generate_error(ErrorKind::InvalidData, &e),
-		};
+		}
 	}
 
 	fn consume_token(&mut self) -> Result<Token, Error> {
@@ -171,27 +171,27 @@ impl Lexer<'_> {
 
 impl Tokenizer for Lexer<'_> {
 	fn get_filename(&self) -> &str {
-		return &self.filename;
+		self.filename
 	}
 	fn get_lineno(&self) -> usize {
-		return self.row;
+		self.row
 	}
 	fn get_charno(&self) -> i32 {
-		return self.col;
+		self.col
 	}
 	fn peek_token(&mut self) -> Result<&Token, Error> {
 		if self.peeked_token.is_none() {
 			self.peeked_token = Some(self.consume_token()?);
 		}
-		return Ok(self.peeked_token.as_ref().unwrap());
+		Ok(self.peeked_token.as_ref().unwrap())
 	}
 
 	fn next_token(&mut self) -> Result<Token, Error> {
 		let token = self.peeked_token.take();
-		return match token {
+		match token {
 			Some(t) => Ok(t),
 			None => self.consume_token(),
-		};
+		}
 	}
 }
 

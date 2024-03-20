@@ -1,7 +1,7 @@
 use core::fmt;
 use std::io::Error;
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
 	SOF,     // Start of File
@@ -36,10 +36,10 @@ pub struct Token {
 
 impl Token {
 	pub const fn sym(ttype: TokenType) -> Token {
-		return Token { ttype: ttype, value: None };
+		Token { ttype, value: None }
 	}
 	pub const fn val(ttype: TokenType, value: Option<String>) -> Token {
-		return Token { ttype: ttype, value: value };
+		Token { ttype, value }
 	}
 }
 
