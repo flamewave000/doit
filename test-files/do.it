@@ -10,6 +10,8 @@ target1 {
 
 	my_var = "Local string variable"
 	$ echo "$my_var"
+	my_var = "Variable reassignment"
+	$ echo "$my_var"
 }
 target2 {
 	# single line comment
@@ -22,6 +24,8 @@ Multiline comment
 ###
 
 target4 {
+	$ echo "$global_var"
+	global_var = 24
 	$$$
 	my_var="Multiline script statement"
 	echo "$$my_var"
