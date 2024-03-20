@@ -66,9 +66,11 @@ namespace doit {
 			os << vars[token];
 		return os.str();
 	}
-	inline args_map &concat(args_map &target, const args_map &elements) {
-		target.insert(elements.begin(), elements.end());
-		return target;
+	inline args_map concat(args_map &target, const args_map &elements) {
+		args_map result;
+		result.insert(target.begin(), target.end());
+		result.insert(elements.begin(), elements.end());
+		return result;
 	}
 }
 "#;

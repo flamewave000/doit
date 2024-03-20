@@ -38,9 +38,13 @@ impl Generator<'_> {
 					result.push_str(&generate_exit(node)?);
 				}
 				NodeType::ASSIGN => {
-					locals.push(node.value.value.as_ref().unwrap());
+					let var_name = node.value.value.as_ref().unwrap();
+					let exists = locals.contains(&var_name.as_str());
+					if !exists {
+						locals.push(node.value.value.as_ref().unwrap());
+					}
 					result.push_str(indent);
-					result.push_str(&generate_variable(node)?);
+					result.push_str(&generate_variable(node, exists)?);
 				}
 				NodeType::TARGET => {
 					let name = node_value(node).to_string();

@@ -13,7 +13,7 @@ pub fn node_value(node: &Node) -> &str {
 	};
 }
 
-pub fn generate_variable(node: &Node) -> Result<String, Error> {
+pub fn generate_variable(node: &Node, exists: bool) -> Result<String, Error> {
 	if node.value.value.is_none() {
 		return Err(Error::new(ErrorKind::InvalidData, ""));
 	}
@@ -33,9 +33,15 @@ pub fn generate_variable(node: &Node) -> Result<String, Error> {
 			}
 		}
 	}
-	let var_type = if node.children[0].value.ttype == TokenType::LIT_NUM { "double" } else { "::std::string" };
+	let var_type = if exists {
+		""
+	} else if node.children[0].value.ttype == TokenType::LIT_NUM {
+		"double "
+	} else {
+		"::std::string "
+	};
 	Ok(format!(
-		"{} {} ={};\n",
+		"{}{} ={};\n",
 		var_type,
 		node.value.value.as_ref().unwrap(),
 		&expression
@@ -80,28 +86,36 @@ mod tests {
 			NodeType::SYMBOL,
 			Token::val(TokenType::LIT_NUM, some("42")),
 		)];
-		let mut result = generate_variable(&node)?;
+		let result = generate_variable(&node, false)?;
 		assert_eq!(result, "double my_var = 42;\n");
+		let mut result = generate_variable(&node, true)?;
+		assert_eq!(result, "my_var = 42;\n");
 		node.children = vec![Node::single(
 			NodeType::SYMBOL,
 			Token::val(TokenType::LIT_STR, some("Hello, world!")),
 		)];
-		result = generate_variable(&node)?;
+		result = generate_variable(&node, false)?;
 		assert_eq!(result, "::std::string my_var = \"Hello, world!\";\n");
+		result = generate_variable(&node, true)?;
+		assert_eq!(result, "my_var = \"Hello, world!\";\n");
 		node.children = vec![
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, some("42"))),
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("+"))),
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("other_var"))),
 		];
-		result = generate_variable(&node)?;
+		result = generate_variable(&node, false)?;
 		assert_eq!(result, "double my_var = 42 + other_var;\n");
+		result = generate_variable(&node, true)?;
+		assert_eq!(result, "my_var = 42 + other_var;\n");
 		node.children = vec![
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_STR, some("test"))),
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("+"))),
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("other_var"))),
 		];
-		result = generate_variable(&node)?;
+		result = generate_variable(&node, false)?;
 		assert_eq!(result, "::std::string my_var = \"test\" + other_var;\n");
+		result = generate_variable(&node, true)?;
+		assert_eq!(result, "my_var = \"test\" + other_var;\n");
 		Ok(())
 	}
 
