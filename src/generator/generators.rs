@@ -23,6 +23,7 @@ pub fn generate_variable(node: &Node) -> Result<String, Error> {
 			return Err(Error::new(ErrorKind::InvalidData, "Unexpected node type"));
 		}
 		if let Some(value) = &child.value.value {
+			expression.push(' ');
 			if child.value.ttype == TokenType::LIT_STR {
 				expression.push('"');
 				expression.push_str(value);
@@ -37,12 +38,12 @@ pub fn generate_variable(node: &Node) -> Result<String, Error> {
 	} else {
 		"::std::string"
 	};
-	Ok(format!(
-		"{} {} = {};\n",
+	return Ok(format!(
+		"{} {} ={};\n",
 		var_type,
 		node.value.value.as_ref().unwrap(),
 		&expression
-	))
+	));
 }
 pub fn generate_script(node: &Node, vars: &[&str]) -> Result<String, Error> {
 	let vars: Vec<String> = vars.iter().map(|var| format!("__VAR({})", *var)).collect();
@@ -66,7 +67,7 @@ mod tests {
 	use std::io::Error;
 
 	use crate::{
-		generator::generators::generate_comment,
+		generator::generators::{generate_comment, generate_script, generate_variable},
 		lexer::token::{Token, TokenType},
 		parser::nodes::{Node, NodeType},
 	};
@@ -74,13 +75,42 @@ mod tests {
 	use super::generate_exit;
 
 	#[test]
-	fn test_generate_variable() {
-		// TODO
+	fn test_generate_variable() -> Result<(), Error> {
+		let mut node = Node::single(NodeType::ASSIGN, Token::val(TokenType::ASSIGN, Some("my_var".to_string())));
+		node.children = vec![Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, Some("42".to_string())))];
+		let mut result = generate_variable(&node)?;
+		assert_eq!(result, "double my_var = 42;\n");
+		node.children = vec![Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_STR, Some("Hello, world!".to_string())))];
+		result = generate_variable(&node)?;
+		assert_eq!(result, "::std::string my_var = \"Hello, world!\";\n");
+		node.children = vec![
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, Some("42".to_string()))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("+".to_string()))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("other_var".to_string())))
+		];
+		result = generate_variable(&node)?;
+		assert_eq!(result, "double my_var = 42 + other_var;\n");
+		node.children = vec![
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_STR, Some("test".to_string()))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("+".to_string()))),
+			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, Some("other_var".to_string())))
+		];
+		result = generate_variable(&node)?;
+		assert_eq!(result, "::std::string my_var = \"test\" + other_var;\n");
+		return Ok(());
 	}
 
 	#[test]
-	fn test_generate_script() {
-		// TODO
+	fn test_generate_script() -> Result<(), Error> {
+		let node = Node::single(
+			NodeType::SCRIPT,
+			Token::val(TokenType::SCRIPT, Some("echo hello world".to_string())),
+		);
+		let mut result = generate_script(&node, &vec!["var1"])?;
+		assert_eq!(result, "__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", __VARS(__VAR(var1)));\n");
+		result = generate_script(&node, &vec!["var1","var2","var3"])?;
+		assert_eq!(result, "__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", __VARS(__VAR(var1),__VAR(var2),__VAR(var3)));\n");
+		return Ok(());
 	}
 
 	#[test]
