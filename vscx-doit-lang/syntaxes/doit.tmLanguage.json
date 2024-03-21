@@ -1,0 +1,69 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "doit",
+	"patterns": [
+		{ "include": "#keywords" },
+		{ "include": "#strings" },
+		{ "include": "#targets" },
+		{ "include": "#scripts" },
+		{ "include": "#variables" },
+		{ "include": "#comment.single" },
+		{ "include": "#comment.block" },
+		{ "include": "#help.single" },
+		{ "include": "#help.block" }
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.doit",
+				"match": "\\b(exit)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.doit",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.doit",
+					"match": "(\\\\.|\\$\\$)"
+				},
+				{
+					"name": "variable.parameter.doit",
+					"match": "[^\\$]?(\\$[a-zA-Z]\\w*)"
+				}
+			]
+		},
+		"targets": {
+			"name": "entity.name.function.doit",
+			"match": "^\\s*\\b([a-zA-Z]\\w*)\\b\\s*[{:]"
+		},
+		"variables": {
+			"name": "variable.name.doit",
+			"match": "^\\s*\\b([a-zA-Z]\\w*)\\b\\s*="
+		},
+		"comment.single": {
+			"name": "comment.line.doit",
+			"match": "#[^#][^#].*"
+		},
+		"comment.block": {
+			"name": "comment.block.doit",
+			"begin": "###",
+			"end": "###"
+		},
+		"help.single": {
+			"name": "comment.block.documentation.doit",
+			"match": "@[^@][^@].*"
+		},
+		"help.block": {
+			"name": "comment.block.documentation.doit",
+			"begin": "@@@",
+			"end": "@@@"
+		},
+		"scripts": {
+			"name": "entity.name.class.doit",
+			"match": "^\\s*(\\${1,3})"
+		}
+	},
+	"scopeName": "source.doit"
+}

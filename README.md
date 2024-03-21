@@ -33,6 +33,12 @@ There is also a `pre-commit.sh` hook script that can be added to your local repo
 ln -s -f ../../pre-commit.sh .git/hooks/pre-commit
 ```
 
+## Syntax Highlighting for VSCode
+
+I've made a very simple extension for VSCode to do syntax highlighting. This extension can be found in the `vscx-doit-lang/` directory.
+
+You can local install it in VSCode by hitting `Ctrl+Shift+P` and searching for `Developer: Install Extension from Location...`. After selecting that option it will prompt you for a directory, simply navigate to the `vscx-doit-lang` directory and hit ok.
+
 ## Contributions
 
 The primary goal of this script is to truly follow the ideology of K.I.S.S. Simplicity and ease of use. Yes this means we lose the advantage of certain advanced features, but that's fine. If your build script needs more complexity, then there are better options out there that you can use like Makefile, NPM, Gulp, etc.

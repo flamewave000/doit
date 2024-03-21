@@ -1,0 +1,47 @@
+{
+	"name": "doit-lang",
+	"displayName": "doit-lang",
+	"description": "Language support for DOIT scripts",
+	"author": {
+		"name": "flamewave000",
+		"url": "https://github.com/flamewave000"
+	},
+	"repository": {
+		"type": "github",
+		"url": "https://github.com/flamewave000/doit/tree/master/vscx-doit-lang",
+		"directory": "vscx-doit-lang"
+	},"bugs": {"url": "https://github.com/flamewave000/doit/issues"},
+	"version": "1.0.0",
+	"license": "MIT",
+	"scripts": {
+		"install_vsce": "sudo npm install -g @vscode/vsce",
+		"package": "vsce package"
+	},
+	"engines": {
+		"vscode": "^1.87.0"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"contributes": {
+		"languages": [
+			{
+				"id": "doit",
+				"aliases": [
+					"doit"
+				],
+				"extensions": [
+					"do.it"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "doit",
+				"scopeName": "source.doit",
+				"path": "./syntaxes/doit.tmLanguage.json"
+			}
+		]
+	}
+}
