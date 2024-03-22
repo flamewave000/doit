@@ -4,8 +4,7 @@
 #include <algorithm>
 
 #define __VAR(variable) {#variable, ::doit::to_string(variable)}
-#define __VARS(...) ::doit::concat(__args, {__VA_ARGS__})
-#define __SYSTEM(statement, vars) system(::doit::inject(statement, vars).c_str())
+#define __SYSTEM(statement, vars) system(::doit::inject(statement, argc, argv, vars).c_str())
 namespace script {
 {{{TARGET_DEFINITIONS}}}
 }
@@ -18,6 +17,7 @@ typedef ::std::pair<::std::string, ::std::string> __target_help;
 void print_help() {
 	::std::string line;
 	::std::stringstream is;
+	printf("Usage: doit <target> [args...]\n");
 	auto help_description = ::doit::trim(R"__DOIT__({{{ROOT_HELP}}})__DOIT__");
 	if (help_description.size() > 0) {
 		is = ::std::stringstream(help_description);
@@ -25,7 +25,6 @@ void print_help() {
 			printf("       %s\n", line.c_str());
 		}
 	}
-	printf("Usage: doit <target> [args...]\n");
 	printf("\nTARGETS\n");
 	::std::vector<__target_help> targets = {{{{TARGET_HELPS}}}
 	};
@@ -45,15 +44,12 @@ void print_help() {
 }
 #undef __HELP
 
-#define __MATCH(pattern) else if (!strcmp(argv[1], #pattern)) ::script::pattern(args)
+#define __MATCH(pattern) else if (!strcmp(argv[1], #pattern)) ::script::pattern(argc - 1, argv + 1)
 int main(int argc, const char *argv[]) {
 	if (argc < 2) {
 		print_help();
 		return EXIT_FAILURE;
 	}
-	::doit::args_map args;
-	for (size_t i = 1; i < argc; i++)
-		args[::std::to_string(i-1)] = argv[i];
 	if (!strcmp(argv[1], "--help"))
 		print_help();{{{TARGET_MATCHES}}}
 	else {

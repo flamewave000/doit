@@ -1,23 +1,18 @@
 @ Project builder
-
 build {
 	@ Build help statement.
-	$ cargo build --color=always $1 $2 $3 $4 $5 $6 $7 $8 $9
+	$ cargo build --color=always $@
 }
-
 clean {
 	@ Clean Project
 	$ cargo clean
 }
-
 test {
 	@ Test project
-	$ cargo test --color=always $1 $2 $3 $4 $5 $6 $7 $8 $9
+	$ cargo test --color=always $@
 }
-
 lint {
 	@ Test project
-	$ cargo clippy --all-targets --all-features -- -D warnings $1 $2 $3 $4 $5 $6 $7 $8 $9
+	$ cargo clippy --all-targets --all-features -- -D warnings $@
 }
-
-compile_test: cd test-files && doit -f --keep $1 $2 $3 $4
+compile_test: cd test-files && doit -f --keep $@

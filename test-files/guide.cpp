@@ -5,17 +5,25 @@
 #include <algorithm>
 
 #define __VAR(variable) {#variable, ::doit::to_string(variable)}
-#define __VARS(...) ::doit::concat(__args, {__VA_ARGS__})
-#define __SYSTEM(statement, vars) system(::doit::inject(statement, vars).c_str())
+#define __SYSTEM(statement, vars) system(::doit::inject(statement, argc, argv, vars).c_str())
 namespace script {
 	double my_value = 42;
 	// this is a comment and everything to the end of the line is ignored
-	void build(::doit::args_map __args) {
-		__SYSTEM(R"__DOIT__(echo "hello $1, how are you? Here is my value: $(my_value)" | cat)__DOIT__", __VARS(__VAR(my_value)));
+	void build(int argc, const char *argv[]) {
+		__SYSTEM(R"__DOIT__(echo "hello $1, how are you? Here is my value: $(my_value)" | cat)__DOIT__", {__VAR(my_value)});
 	}
-	void clean(::doit::args_map __args) {
+	void clean(int argc, const char *argv[]) {
+		__SYSTEM(R"__DOIT__(
+echo "\$$1 \$$2 \$$3 \$$4 = $1 $2 $3 $4"
+echo "     \$$(1:4) = $(1:4)"
+echo "         \$$@ = $@"
+echo "      \$$(3:) = $(3:@)"
+echo "     \$$(3: ) = $(3: )"
+echo "  \$$my_value = $my_value"
+echo "\$$(my_value) = $(my_value)"
+		)__DOIT__", {__VAR(my_value)});
 	}
-	void run(::doit::args_map __args) {
+	void run(int argc, const char *argv[]) {
 	}
 }
 #undef __VAR
@@ -61,15 +69,12 @@ Homies!!
 }
 #undef __HELP
 
-#define __MATCH(pattern) else if (!strcmp(argv[1], #pattern)) ::script::pattern(args)
+#define __MATCH(pattern) else if (!strcmp(argv[1], #pattern)) ::script::pattern(argc - 1, argv + 1)
 int main(int argc, const char *argv[]) {
 	if (argc < 2) {
 		print_help();
 		return EXIT_FAILURE;
 	}
-	::doit::args_map args;
-	for (size_t i = 1; i < argc; i++)
-		args[::std::to_string(i-1)] = argv[i];
 	if (!strcmp(argv[1], "--help"))
 		print_help();
 	__MATCH(build);

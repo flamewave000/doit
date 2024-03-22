@@ -106,6 +106,10 @@ clean: [EXPR]
 
 Script commands are denoted by a single `$` for single line scripts, or can be surrounded by `$$$` for a script block. These scripts are run on the system via the C/C++ `system()` call. These are essentially converted to raw-strings. They can contain variables which are used by prefacing the variable name with a single `$` or for better distinction, can be contained within `$(...)`. This is useful if the tail of the variable is beside an alphanumeric character. Arguments passed in from the console can also be accessed using the `$1` style variables. If you wish to reference an environment variable, you can use a double `$$` for the variable reference. The double `$$` will be converted to a single `$` when the script is run.
 
+#### CLI Args Expansion
+
+Variable insertion can performa CLI Argument expansion using the following patterns: `$@`, `$(beg:end)`, `$(beg:)`. The `$@` will be expanded to all CLI arguments starting at index `1` (excludes `$0` with is the target name). The second and third describe argument index ranges inclusively. So `$(2:5)` will select 4 arguments at indexes 2-5 inclusively. By ommitting the `end` parameter, it will automatically select all remaining arguments after the `beg` index inclusive. So if 5 arguments are passed `$(2:)` will also select the 4 args at indexes 2-5.
+
 IMPORTANT! Separate script executions do not share environments, so an environment variable set in one is not accessible in another. Please use multiline scripts for such cases.
 
 ```sh
@@ -123,6 +127,14 @@ my_target {
 
 	# Note: $0 will be the name of the target being run
 	$ echo "Access command line args: $0 $1 $2 $3"
+
+	# Expands all CLI args into the script
+	$ echo "$@"
+
+	# Expands all CLI args from index 2, to index 5 inclusively
+	$ echo "$(2:5)"
+	# Expands all CLI args from index 2, to the last index inclusively
+	$ echo "$(2:)"
 }
 ```
 

@@ -50,7 +50,7 @@ pub fn generate_variable(node: &Node, exists: bool) -> Result<String, Error> {
 pub fn generate_script(node: &Node, vars: &[&str]) -> Result<String, Error> {
 	let vars: Vec<String> = vars.iter().map(|var| format!("__VAR({})", *var)).collect();
 	Ok(format!(
-		r#"__SYSTEM(R"__DOIT__({})__DOIT__", __VARS({}));{}"#,
+		r#"__SYSTEM(R"__DOIT__({})__DOIT__", ::doit::args_map({{{}}}));{}"#,
 		node_value(node),
 		vars.join(","),
 		'\n'
@@ -128,12 +128,12 @@ mod tests {
 		let mut result = generate_script(&node, &["var1"])?;
 		assert_eq!(
 			result,
-			"__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", __VARS(__VAR(var1)));\n"
+			"__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", ::doit::args_map({__VAR(var1)}));\n"
 		);
 		result = generate_script(&node, &["var1", "var2", "var3"])?;
 		assert_eq!(
 			result,
-			"__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", __VARS(__VAR(var1),__VAR(var2),__VAR(var3)));\n"
+			"__SYSTEM(R\"__DOIT__(echo hello world)__DOIT__\", ::doit::args_map({__VAR(var1),__VAR(var2),__VAR(var3)}));\n"
 		);
 		Ok(())
 	}

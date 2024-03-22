@@ -1,5 +1,6 @@
 pub const DOIT_HEADER: &str = r#"#include <unordered_map>
 #include <sstream>
+#include <regex>
 namespace doit {
 	typedef ::std::unordered_map<::std::string, ::std::string> args_map;
 	inline ::std::string to_string(::std::string __val) { return __val; }
@@ -16,26 +17,60 @@ namespace doit {
 		if (first == ::std::string::npos || last == ::std::string::npos) return text;
 		return text.substr(first, (last - first) + 1);
 	}
-	::std::string inject(::std::string fmt, args_map vars) {
+	::std::string inject(::std::string fmt, int argc, const char *argv[], args_map vars) {
 		::std::ostringstream os;
 		::std::string token = "";
 		bool parsing = false;
 		bool bracketed = false;
+		auto get = [&vars, argc, argv](const ::std::string &key) -> ::std::string {
+			// if we are matching a single CLI arg
+			if (::std::all_of(key.begin(), key.end(), ::isdigit)) {
+				int64_t idx = atoll(key.c_str());
+				if (idx < 0 || idx >= argc) return "";
+				return argv[idx];
+			}
+			// If we are matching ALL available CLI args
+			if (key.size() == 1 && key[0] == '@') {
+				::std::ostringstream oss;
+				for (int c = 1; c < argc; c++) {
+					oss << argv[c];
+					if (c < argc - 1) oss << ' ';
+				}
+				return oss.str();
+			}
+			::std::regex pattern("(\\d+):(\\d+)?");
+			::std::smatch matches;
+			// If we are matching a range af CLI args
+			if (::std::regex_search(key, matches, pattern)) {
+				int first = atoll(matches[1].str().c_str());
+				auto match2 = matches[2].str();
+				int last = match2.size() == 0 ? argc - 1 : atoll(matches[2].str().c_str());
+				if (first < last && first >= 0) {
+					::std::ostringstream oss;
+					for (int c = first, size = ::std::min(last + 1, argc); c < size; c++) {
+						oss << argv[c];
+						if (c < size - 1) oss << ' ';
+					}
+					return oss.str();
+				}
+			}
+			return vars[key];
+		};
 		for (size_t c = 0, size = fmt.size(); c < size; c++) {
 			if (parsing) {
 				if (bracketed) {
 					if (fmt[c] == ')') {
 						bracketed = false;
 						parsing = false;
-						os << vars[token];
+						os << get(token);
 						token = "";
 					}
 					else
 						token += fmt[c];
 				} else {
-					if (!isalnum(fmt[c]) && fmt[c] != '_') {
+					if (!isalnum(fmt[c]) && fmt[c] != '_' && fmt[c] != '@') {
 						parsing = false;
-						os << vars[token] << fmt[c];
+						os << get(token) << fmt[c];
 						token = "";
 					} else
 						token += fmt[c];
@@ -62,15 +97,10 @@ namespace doit {
 				}
 			}
 		}
-		if (token.size() > 0)
-			os << vars[token];
+		if (token.size() > 0) {
+			os << get(token);
+		}
 		return os.str();
-	}
-	inline args_map concat(args_map &target, const args_map &elements) {
-		args_map result;
-		result.insert(target.begin(), target.end());
-		result.insert(elements.begin(), elements.end());
-		return result;
 	}
 }
 "#;
@@ -81,8 +111,7 @@ pub const SOURCE_FILE: &str = r#"#include <iostream>
 #include <algorithm>
 
 #define __VAR(variable) {#variable, ::doit::to_string(variable)}
-#define __VARS(...) ::doit::concat(__args, {__VA_ARGS__})
-#define __SYSTEM(statement, vars) system(::doit::inject(statement, vars).c_str())
+#define __SYSTEM(statement, vars) system(::doit::inject(statement, argc, argv, vars).c_str())
 namespace script {
 {{{TARGET_DEFINITIONS}}}
 }
@@ -95,15 +124,14 @@ typedef ::std::pair<::std::string, ::std::string> __target_help;
 void print_help() {
 	::std::string line;
 	::std::stringstream is;
+	printf("Usage: doit <target> [args...]\n");
 	auto help_description = ::doit::trim(R"__DOIT__({{{ROOT_HELP}}})__DOIT__");
 	if (help_description.size() > 0) {
 		is = ::std::stringstream(help_description);
 		while (::std::getline(is, line)) {
-			printf("%s\n", line.c_str());
+			printf("       %s\n", line.c_str());
 		}
-		printf("\n");
 	}
-	printf("Usage: doit <target> [args...]\n");
 	printf("\nTARGETS\n");
 	::std::vector<__target_help> targets = {{{{TARGET_HELPS}}}
 	};
@@ -123,15 +151,12 @@ void print_help() {
 }
 #undef __HELP
 
-#define __MATCH(pattern) else if (!strcmp(argv[1], #pattern)) ::script::pattern(args)
+#define __MATCH(pattern) else if (!strcmp(argv[1], #pattern)) ::script::pattern(argc - 1, argv + 1)
 int main(int argc, const char *argv[]) {
 	if (argc < 2) {
 		print_help();
 		return EXIT_FAILURE;
 	}
-	::doit::args_map args;
-	for (size_t i = 1; i < argc; i++)
-		args[::std::to_string(i-1)] = argv[i];
 	if (!strcmp(argv[1], "--help"))
 		print_help();{{{TARGET_MATCHES}}}
 	else {

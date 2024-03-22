@@ -16,6 +16,16 @@ target1 {
 target2 {
 	# single line comment
 	$ echo "Single line script"
+	my_value = 42
+	$$$
+	echo "\$$1 \$$2 \$$3 \$$4 = $1 $2 $3 $4"
+	echo "     \$$(1:4) = $(1:4)"
+	echo "         \$$@ = $@"
+	echo "      \$$(3:) = $(3:@)"
+	echo "     \$$(3: ) = $(3: )"
+	echo "  \$$my_value = $my_value"
+	echo "\$$(my_value) = $(my_value)"
+	$$$
 }
 target3: echo "single line target"
 

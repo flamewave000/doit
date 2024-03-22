@@ -48,7 +48,7 @@ impl Generator<'_> {
 				}
 				NodeType::TARGET => {
 					let name = node_value(node).to_string();
-					result.push_str(&format!("{}void {}(::doit::args_map __args) {{\n", indent, &name));
+					result.push_str(&format!("{}void {}(int argc, const char *argv[]) {{\n", indent, &name));
 					tgts.push((
 						name,
 						node.help
