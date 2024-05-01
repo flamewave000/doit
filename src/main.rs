@@ -38,7 +38,7 @@ fn main() {
 	let mut print_nodes = false;
 	let mut print_source = false;
 	let mut keep_source = false;
-	let mut filename: String = "./do.it".to_string();
+	let mut filename: String = String::new();
 	while !args.is_empty() && args[0].starts_with('-') {
 		match args.remove(0).as_str() {
 			"-f" => force_recompile = true,
@@ -59,6 +59,12 @@ fn main() {
 		}
 	}
 
+	if filename.is_empty() {
+		filename = "./doit".to_string();
+		if !Path::new(&filename).exists() && Path::new("./do.it").exists() {
+			filename = "./do.it".to_string();
+		}
+	}
 	if !Path::new(&filename).exists() {
 		log::error(&format!("Could not find '{}' file in current directory", filename));
 		exit(1);
