@@ -10,6 +10,32 @@ pub trait Consumer {
 	fn look_ahead(&self, ahead: usize) -> Option<char>;
 }
 
+struct VecCharConsumer<'consumer> {
+	data: &'consumer Vec<char>,
+	position: usize
+}
+impl VecCharConsumer<'_> {
+	pub fn new<'new>(data: &'new Vec<char>) -> VecCharConsumer<'new> {
+		VecCharConsumer::<'new> { data, position: 0 }
+	}
+}
+
+impl Consumer for VecCharConsumer<'_> {
+	fn consume(&mut self) -> Result<char, String> {
+		match self.data.get(self.position) {
+			Some(c) => { self.position += 1; Ok(*c) },
+			None => Err("end of string".to_string()),
+		}
+	}
+	fn consume_and_ignore(&mut self) -> Result<(), String> {
+		if self.position >= self.data.len() { return Err("end of string".to_string()); }
+		self.position += 1;
+		Ok(())
+	}
+	fn peek(&self) -> Option<char> { self.look_ahead(1) }
+	fn look_ahead(&self, ahead: usize) -> Option<char> { self.data.get(self.position + (ahead - 1)).copied() }
+}
+
 pub fn scan_whitespace(consumer: &mut dyn Consumer) -> Result<(), String> {
 	loop {
 		let next = consumer.peek().unwrap_or('\0');
@@ -121,19 +147,43 @@ pub fn read_script(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 	conditional_reader(consumer, |x| *x != '\n')
 }
 
+pub fn convert_help_block_escapes(parsed: Result<Vec<char>, String>) -> Result<Vec<char>, String> {
+	parsed.as_ref()?;
+	let text = parsed.unwrap();
+	let mut cons = VecCharConsumer::new(&text);
+	let mut result: Vec<char> = Vec::new();
+	while let Ok(mut next) = cons.consume() {
+		// let mut next = c;
+		if next != '\\' {
+			result.push(next);
+			continue;
+		}
+		next = cons.consume()?;
+		match next {
+			'n' => result.push('\x0a'),
+			'r' => result.push('\x0d'),
+			'e' => result.push('\x1B'),
+			_ => {
+				result.push('\\');
+				result.push(next);
+			}
+		}
+	}
+	Ok(result)
+}
 pub fn read_help_block(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 	if consumer.look_ahead(1).unwrap_or('\0') == '@' && consumer.look_ahead(2).unwrap_or('\0') == '@' {
-		return read_delimited_block(consumer, '@', TokenType::HELP);
+		return convert_help_block_escapes(read_delimited_block(consumer, '@', TokenType::HELP));
 	}
-	// ignore the first '$' character
+	// ignore the first '@' character
 	consumer.consume_and_ignore()?;
 	scan_whitespace(consumer)?;
-	conditional_reader(consumer, |x| *x != '\n')
+	convert_help_block_escapes(conditional_reader(consumer, |x| *x != '\n'))
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::lexer::lexers::{read_comment, read_help_block, read_nomenclature, read_script, read_string};
+	use crate::lexer::lexers::{read_comment, read_help_block, read_nomenclature, read_script, read_string, convert_help_block_escapes};
 
 	use super::{read_number, scan_whitespace, Consumer};
 
@@ -203,6 +253,21 @@ mod tests {
 		assert_eq!(run_test(read_string, "\"Hello, world!\"\n"), "Hello, world!");
 	}
 	#[test]
+	fn test_convert_help_block_escapes() {
+		fn test(input: &str, expect: &str) {
+			let result = convert_help_block_escapes(Ok(input.chars().collect()));
+			assert!(result.is_ok());
+			assert_eq!(result.unwrap().iter().collect::<String>(), expect);
+		}
+		test("hello \\e world", "hello \x1b world");
+		test("hello \\r world", "hello \x0d world");
+		test("hello \\n world", "hello \x0a world");
+		test("hello \\f world", "hello \\f world");
+		test("hello \\e world \\e", "hello \x1b world \x1b");
+		test("hello a world", "hello a world");
+		test("Special escape character: \\e", "Special escape character: \x1b");
+	}
+	#[test]
 	fn test_read_comment() {
 		assert_eq!(
 			run_test(read_comment, "# everything to the end   \n"),
@@ -226,13 +291,8 @@ mod tests {
 	}
 	#[test]
 	fn test_read_help_block() {
-		assert_eq!(
-			run_test(read_help_block, "@ everything to the end   \n"),
-			"everything to the end   ",
-		);
-		assert_eq!(
-			run_test(read_help_block, "@@@\n Everything in here\n@@@ nothing here   "),
-			" Everything in here",
-		);
+		assert_eq!(run_test(read_help_block, "@ everything to the end   \n"), "everything to the end   ");
+		assert_eq!(run_test(read_help_block, "@@@\n Everything in here\n@@@ nothing here   "), " Everything in here");
+		assert_eq!(run_test(read_help_block, "@ Special escape character: \\e\n"), "Special escape character: \x1b");
 	}
 }
