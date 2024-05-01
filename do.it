@@ -15,4 +15,27 @@ lint {
 	@ Test project
 	$ cargo clippy --all-targets --all-features -- -D warnings $@
 }
+pack {
+	@ Pack the binaries into a zip and tarball
+	ZIP = "doit.elf64.zip"
+	TAR = "doit.elf64.tar.gz"
+	$$$
+	if [ ! -e "./target/release/doit" ] ; then
+		echo "Please run: \e[93mcargo build -r\e[0m"
+		exit 1
+	fi
+	if [ ! -$$(which zip) ] ; then
+		echo "Please install Zip: \e[93mapt install zip\e[0m"
+		exit 1
+	fi
+	cd ./target/release
+	if [ -e "$ZIP" ] ; then rm "$ZIP" ; fi
+	if [ -e "$TAR" ] ; then rm "$TAR" ; fi
+	zip "$ZIP" doit > /dev/null
+	echo "Zip: \e[93m$$(pwd)/$ZIP\e[0m"
+	tar -zcf "$TAR" doit > /dev/null
+	echo "Tar: \e[93m$$(pwd)/$TAR\e[0m"
+	cd - > /dev/null
+	$$$
+}
 compile_test: cd test-files && doit -f --keep $@
