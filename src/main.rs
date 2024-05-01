@@ -15,6 +15,10 @@ use compiler::CompileMode;
 
 use crate::utils::log;
 
+const VERSION_MAJOR: i8 = 1;
+const VERSION_MINOR: i8 = 1;
+const VERSION_PATCH: i8 = 0;
+
 fn print_help(program_name: &str) {
 	println!("Usage: {} [options] <target> [target_params]\n", program_name);
 	println!("If the target is ommitted, command will print out a list of available targets.");
@@ -48,6 +52,10 @@ fn main() {
 			"--keep" => keep_source = true,
 			"--help" => {
 				print_help(&program_name);
+				exit(0);
+			},
+			"--version" => {
+				println!("doit {}.{}.{}", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
 				exit(0);
 			}
 			"-t" => filename = args.remove(0),
