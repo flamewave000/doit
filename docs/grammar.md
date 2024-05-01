@@ -54,7 +54,7 @@ exit 1+my_result
 
 ### Help Statement
 
-Within a target, you can provide a help block that can be parsed as a special singleline or multiline block of text that can be printed for the entire program when a user passes the `-h` or `--help` flags to the program. The must only be one Help block per scope or you will get an error.
+Within a target, you can provide a help block that can be parsed as a special singleline or multiline block of text that can be printed for the entire program when a user runs the program without any sub-commands. There must only be one Help block per scope or you will get an error.
 
 ```
 @@@
@@ -71,6 +71,22 @@ my_target {
 
 my_target2 {
   @ You can also make single line helps
+}
+```
+
+Additionally, help blocks support a small subset of escape characters. You can escape the backslash with a double backslash `\\`.
+
+| character | Description                                                  |
+| --------- | ------------------------------------------------------------ |
+| `\e`      | Inserts the escape character `0x1B, 033, 27` into the help block string. This allows you to print out ANSI Colours to the terminal.<br />For example: `\e[31m I am a block of red text \e[0m` |
+| `\n`      | Standard newline character. NOTE: All separate lines will be indented to align together in the help for individual targets. |
+| `\r`      | Standard carriage-return character. NOTE: All separate lines will be indented to align together in the help for individual targets. |
+
+Example:
+
+```
+my_target {
+	@ This text is normal, \e[31mbut this text becomes red\e[0m
 }
 ```
 
