@@ -16,7 +16,7 @@ use compiler::CompileMode;
 use crate::utils::log;
 
 const VERSION_MAJOR: i8 = 1;
-const VERSION_MINOR: i8 = 1;
+const VERSION_MINOR: i8 = 2;
 const VERSION_PATCH: i8 = 0;
 
 fn print_help(program_name: &str) {
