@@ -1,8 +1,14 @@
 @ Project builder
 build {
-	@ Build help statement.
+	@ Build the current project. Use the '-r' flag to compile a new release build.
 	$ cargo build --color=always $@
 }
+
+release {
+	@ Build a release version and then pack it
+	$ cargo build -r --color=always && doit pack
+}
+
 clean {
 	@ Clean Project
 	$ cargo clean
@@ -17,9 +23,11 @@ lint {
 }
 pack {
 	@ Pack the binaries into a zip and tarball
-	ZIP = "doit.elf64.zip"
-	TAR = "doit.elf64.tar.gz"
 	$$$
+	VER=`./target/release/doit --version | tr '.' '_'`
+	ZIP="pack/doit_$$VER.elf64.zip"
+	TAR="pack/doit_$$VER.elf64.tar.gz"
+
 	if [ ! -e "./target/release/doit" ] ; then
 		echo "Please run: \e[93mcargo build -r\e[0m"
 		exit 1
@@ -28,13 +36,16 @@ pack {
 		echo "Please install Zip: \e[93mapt install zip\e[0m"
 		exit 1
 	fi
+	echo Packing './target/release'
+	if [ -e ./target/pack ]; then
+		rm -R ./target/pack
+	fi
+	mkdir ./target/pack
 	cd ./target/release
-	if [ -e "$ZIP" ] ; then rm "$ZIP" ; fi
-	if [ -e "$TAR" ] ; then rm "$TAR" ; fi
-	zip "$ZIP" doit > /dev/null
-	echo "Zip: \e[93m$$(pwd)/$ZIP\e[0m"
-	tar -zcf "$TAR" doit > /dev/null
-	echo "Tar: \e[93m$$(pwd)/$TAR\e[0m"
+	echo "Zip: \e[93m./target/$$ZIP\e[0m"
+	zip "../$$ZIP" doit > /dev/null
+	echo "Tar: \e[93m./target/$$TAR\e[0m"
+	tar -zcf "../$$TAR" doit > /dev/null
 	cd - > /dev/null
 	$$$
 }
