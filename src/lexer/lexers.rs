@@ -193,7 +193,7 @@ mod tests {
 	}
 	impl MockConsumer {
 		pub fn new(source: &str) -> MockConsumer {
-			return MockConsumer { index: 0, source: source.chars().collect() };
+			MockConsumer { index: 0, source: source.chars().collect() }
 		}
 	}
 	impl Consumer for MockConsumer {

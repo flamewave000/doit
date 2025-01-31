@@ -117,7 +117,7 @@ impl Lexer<'_> {
 			Some(v) => v,
 			None => return Ok(Token::sym(TokenType::EOF)),
 		};
-		return if is_number(&next) {
+		if is_number(&next) {
 			match read_number(self) {
 				Ok(v) => Ok(Token::val(TokenType::LIT_NUM, Some(v.iter().collect()))),
 				Err(e) => self.generate_error(ErrorKind::InvalidData, &e),
@@ -165,7 +165,7 @@ impl Lexer<'_> {
 			Ok(Token::val(TokenType::HELP, Some(self.handle_error(help_block)?)))
 		} else {
 			Ok(Token::val(TokenType::SYMBOL, Some(self.consume().unwrap().to_string())))
-		};
+		}
 	}
 }
 
