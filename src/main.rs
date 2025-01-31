@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 use std::{
-	env,
-	path::Path,
-	process::{exit, Command},
+	env, fs, path::Path, process::{exit, Command}
 };
 
 mod compiler;
@@ -15,10 +13,6 @@ use compiler::CompileMode;
 
 use crate::utils::log;
 
-const VERSION_MAJOR: i8 = 1;
-const VERSION_MINOR: i8 = 2;
-const VERSION_PATCH: i8 = 0;
-
 fn print_help(program_name: &str) {
 	println!("Usage: {} [options] <target> [target_params]\n", program_name);
 	println!("If the target is ommitted, command will print out a list of available targets.");
@@ -26,6 +20,7 @@ fn print_help(program_name: &str) {
 	println!("  Options:");
 	println!("    -f         Force recompile of do.it script.");
 	println!("    -t <file>  Provide a file path to the do.it file if not in CWD.");
+	println!("    -c         Clean the current directory by removing the .doit directory.");
 	println!();
 	println!("  Dev Options:");
 	println!("    --tokens   Print out the lexical tokens instead of fully compiling.");
@@ -55,10 +50,20 @@ fn main() {
 				exit(0);
 			},
 			"--version" => {
-				println!("doit {}.{}.{}", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+				println!("v{}", env!("CARGO_PKG_VERSION"));
 				exit(0);
-			}
+			},
 			"-t" => filename = args.remove(0),
+			"-c" => {
+				if Path::new("./.doit").exists() {
+					if let Err(err) = fs::remove_dir_all("./.doit") {
+						log::error(&err.to_string());
+						exit(1);
+					}
+				}
+				log::info("Cleaned!");
+				exit(0);
+			},
 			fail => {
 				log::error(&format!("Unknown option: {}", fail));
 				print_help(&program_name);
@@ -73,11 +78,33 @@ fn main() {
 			filename = "./do.it".to_string();
 		}
 	}
+
+	match fs::canonicalize(Path::new(&filename)) {
+		Ok(path) => {
+			if let Some(path_str) = path.to_str() {
+				filename = path_str.to_owned();
+			} else {
+				log::error(&format!("Could not calculate and absolute path for the provided doit file '{}'", filename));
+				exit(1);
+			}
+		},
+		Err(err) => {
+			log::error(&format!("Could not calculate and absolute path for the provided doit file '{}'", filename));
+			log::error(&err.to_string());
+			exit(1);
+		}
+	}
+
 	if !Path::new(&filename).exists() {
 		log::error(&format!("Could not find '{}' file in current directory", filename));
 		exit(1);
 	}
+
+	let directory = &format!("./.doit/{}", utils::hash::calculate_hash(&filename));
+	log::debug(&format!("Output directory: {}", directory));
+
 	if let Err(err) = compiler::build(
+		directory,
 		&filename,
 		keep_source,
 		force_recompile,
@@ -98,7 +125,7 @@ fn main() {
 		exit(0);
 	}
 
-	let child = Command::new(".doit/targets").args(&args).spawn();
+	let child = Command::new(directory.to_owned() + "/targets").args(&args).spawn();
 	if let Err(err) = child {
 		log::error(&err.to_string());
 	} else {
