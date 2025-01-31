@@ -7,10 +7,10 @@ use crate::{
 
 pub fn node_value(node: &Node) -> &str {
 	let value = node.value.value.as_ref();
-	return match value {
+	match value {
 		Some(res) => AsRef::as_ref(res),
 		None => "",
-	};
+	}
 }
 
 pub fn generate_variable(node: &Node, exists: bool) -> Result<String, Error> {
