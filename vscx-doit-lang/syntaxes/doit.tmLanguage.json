@@ -17,6 +17,9 @@
 			"patterns": [{
 				"name": "keyword.control.doit",
 				"match": "\\b(exit)\\b"
+			}, {
+				"name": "keyword.other.arg.doit",
+				"match": "\\b(req|opt)\\b\\s+([-_\\w]+)"
 			}]
 		},
 		"strings": {

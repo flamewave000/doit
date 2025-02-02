@@ -13,6 +13,8 @@ pub enum NodeType {
 	SCRIPT,
 	COMMENT,
 	SYMBOL,
+	ARG_REQ,
+	ARG_OPT,
 }
 
 pub struct Node {

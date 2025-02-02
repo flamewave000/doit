@@ -1,14 +1,13 @@
 @ Project builder
 build {
-	@ Build the current project. Use the '-r' flag to compile a new release build.
+	@ Build the current project.
+	opt -r @ Compile optimized release build
 	$ cargo build --color=always $@
 }
-
 release {
 	@ Build a release version and then pack it
 	$ cargo build -r --color=always && doit pack
 }
-
 clean {
 	@ Clean Project
 	$ cargo clean
@@ -49,4 +48,4 @@ pack {
 	cd - > /dev/null
 	$$$
 }
-compile_test: cd test-files && doit -f --keep $@
+# compile_test: cd test-files && doit -f --keep $@

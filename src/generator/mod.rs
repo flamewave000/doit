@@ -1,4 +1,7 @@
-use std::{fmt::Write, io::{Error, ErrorKind}};
+use std::{
+	fmt::Write,
+	io::{Error, ErrorKind},
+};
 
 use crate::parser::{
 	nodes::{Node, NodeType},
@@ -9,6 +12,17 @@ use self::generators::{generate_comment, generate_exit, generate_script, generat
 
 mod generators;
 mod sources;
+
+struct TargetArg {
+	pub required: bool,
+	pub arg_name: String,
+	pub arg_help: String,
+}
+struct Target {
+	pub target_name: String,
+	pub target_help: String,
+	pub target_args: Vec<TargetArg>,
+}
 
 pub struct Generator<'generator> {
 	pub parser: &'generator mut Parser<'generator>,
@@ -24,7 +38,7 @@ impl Generator<'_> {
 		indent: &str,
 		nodes: &Vec<Node>,
 		vars: &[&str],
-		tgts: &mut Vec<(String, String)>,
+		tgts: &mut Vec<Target>,
 	) -> Result<String, Error> {
 		let mut result = String::new();
 		let mut locals: Vec<&str> = vec![];
@@ -49,14 +63,33 @@ impl Generator<'_> {
 				NodeType::TARGET => {
 					let name = node_value(node).to_string();
 					result.push_str(&format!("{}void {}(int argc, const char *argv[]) {{\n", indent, &name));
-					tgts.push((
-						name,
-						node.help
+					tgts.push(Target{
+						target_name: name,
+						target_help: node.help
 							.as_ref()
 							.and_then(|h| h.value.as_ref())
 							.unwrap_or(&"<No help defined>".to_string())
 							.clone(),
-					));
+						target_args: node.children.iter()
+						.filter(|it| { it.ntype == NodeType::ARG_REQ || it.ntype == NodeType::ARG_OPT })
+						.map(|it| {
+							let required: bool;
+							if it.ntype == NodeType::ARG_REQ {
+								required = true;
+							} else if it.ntype == NodeType::ARG_OPT {
+								required = false;
+							} else {
+								panic!("invalid node type");
+							}
+							TargetArg{
+								required,
+								arg_name: it.value.value.clone().expect("argument missing name"),
+								arg_help: it.help.as_ref().and_then(|h| h.value.as_ref())
+										.unwrap_or(&"<No help defined>".to_string())
+										.clone(),
+							}
+						}).collect(),
+					});
 					result.push_str(&self.generate_scope(
 						&(indent.to_string() + "\t"),
 						&node.children,
@@ -74,6 +107,8 @@ impl Generator<'_> {
 					result.push_str(&generate_comment(node)?);
 				}
 				NodeType::SYMBOL => continue,
+				NodeType::ARG_OPT => continue,
+				NodeType::ARG_REQ => continue,
 			}
 		}
 		Ok(result)
@@ -81,7 +116,7 @@ impl Generator<'_> {
 
 	pub fn generate(&mut self) -> Result<String, Error> {
 		let mut source = (sources::SOURCE_FILE).to_string();
-		let mut targets: Vec<(String, String)> = vec![];
+		let mut targets: Vec<Target> = vec![];
 		let root_node = self.parser.parse()?;
 
 		// Generate the definitions
@@ -97,8 +132,18 @@ impl Generator<'_> {
 
 		let help_text = targets
 			.iter()
-			.fold(String::new(), |mut output: String, (tgt, help)| {
-				let _ = write!(output, "\n\t\t__HELP({}, R\"__DOIT__({})__DOIT__\"),", tgt, help);
+			.fold(String::new(), |mut output: String, target: &Target| {
+				write!(output, "\n\t\t__HELP({}, R\"__DOIT__({})__DOIT__\"", target.target_name, target.target_help)
+					.expect("failed to generate code");
+				output = target.target_args.iter().fold(output, |mut output: String, arg: &TargetArg| {
+					write!(
+						output,
+						", __ARG({}, R\"__DOIT__({})__DOIT__\", R\"__DOIT__({})__DOIT__\")",
+						arg.required, arg.arg_name, arg.arg_help
+					).expect("failed to generate code");
+					output
+				});
+				write!(output, "),").expect("failed to generate code");
 				output
 			});
 		source = source.replace("{{{TARGET_HELPS}}}", &help_text);
@@ -106,12 +151,13 @@ impl Generator<'_> {
 		// Generate Target Matches
 		source = source.replace(
 			"{{{TARGET_MATCHES}}}",
-			&targets
-				.iter()
-				.fold(String::new(), |mut output: String, tgt: &(String, String)| {
-					let _ = write!(output, "\n\t__MATCH({});", tgt.0);
+			&targets.iter().fold(
+				String::new(),
+				|mut output: String, tgt: &Target| {
+					let _ = write!(output, "\n\t__MATCH({});", tgt.target_name);
 					output
-				}),
+				},
+			),
 		);
 
 		Ok(sources::DOIT_HEADER.to_string() + &source)
