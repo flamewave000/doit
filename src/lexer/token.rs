@@ -19,6 +19,8 @@ pub enum TokenType {
 	NOMEN,   // abc_123
 	ASSIGN,  // =
 	HELP,    // @@@
+	ARG_REQ, // req
+	ARG_OPT, // opt
 }
 
 pub trait Tokenizer {

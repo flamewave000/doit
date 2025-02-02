@@ -105,6 +105,17 @@ impl Lexer<'_> {
 		}
 	}
 
+	fn consume_argdef(&mut self, ttype: TokenType) -> Result<Token, Error> {
+		if let Err(err) = scan_whitespace(self) {
+			return self.generate_error(ErrorKind::InvalidData, &err);
+		}
+		let symbol: String = match read_nomenclature(self) {
+			Ok(v) => v.iter().collect(),
+			Err(e) => return self.generate_error(ErrorKind::InvalidData, &e),
+		};
+		Ok(Token::val(ttype, Some(symbol)))
+	}
+
 	fn consume_token(&mut self) -> Result<Token, Error> {
 		if self.first {
 			self.first = false;
@@ -129,6 +140,8 @@ impl Lexer<'_> {
 			};
 			match symbol.as_str() {
 				"exit" => Ok(Token::sym(TokenType::EXIT)),
+				"req" => self.consume_argdef(TokenType::ARG_REQ),
+				"opt" => self.consume_argdef(TokenType::ARG_OPT),
 				_ => Ok(Token::val(TokenType::NOMEN, Some(symbol))),
 			}
 		} else if next == '"' {
@@ -199,7 +212,10 @@ impl Tokenizer for Lexer<'_> {
 mod tests {
 	use crate::lexer::token::TokenType;
 
-use super::{token::{Token, Tokenizer}, Lexer};
+	use super::{
+		token::{Token, Tokenizer},
+		Lexer,
+	};
 	use std::io::Error;
 
 	fn check(token: Token, expected_type: TokenType, expected_value: &str) {
@@ -209,7 +225,9 @@ use super::{token::{Token, Tokenizer}, Lexer};
 
 	#[test]
 	fn test_lexer() -> Result<(), Error> {
-		let mut lexer = Lexer::new("test-source.it", r"@@@
+		let mut lexer = Lexer::new(
+			"test-source.it",
+			r"@@@
 help1
 @@@
 # comment1
@@ -221,7 +239,8 @@ test1 {
 	# comment2
 }
 test2: script2
-");
+",
+		);
 		check(lexer.next_token()?, TokenType::SOF, "");
 		check(lexer.next_token()?, TokenType::HELP, "help1");
 		check(lexer.next_token()?, TokenType::EOL, "");

@@ -77,17 +77,26 @@ impl Parser<'_> {
 		Ok(())
 	}
 
+	fn parse_argdef(&mut self, scope: &mut Node, ntype: NodeType) -> Result<(), Error> {
+		let mut node = Node::single(ntype, self.tokenizer.next_token()?);
+		if self.tokenizer.peek_token()?.ttype == TokenType::HELP {
+			node.help = Some(self.tokenizer.next_token()?);
+		}
+		scope.children.push(node);
+		Ok(())
+	}
+
 	fn parse_scope(&mut self, scope: &mut Node) -> Result<(), Error> {
 		loop {
 			let next = self.tokenizer.peek_token()?;
 			match next.ttype {
 				// Ignore dangling EOL tokens (empty lines)
 				TokenType::EOL => {
-					let _ = self.tokenizer.next_token();
+					self.tokenizer.next_token()?;
 					continue;
 				}
 				TokenType::EOF | TokenType::TGT_END => {
-					let _ = self.tokenizer.next_token();
+					self.tokenizer.next_token()?;
 					return Ok(());
 				}
 				TokenType::EXIT => scope.children.push(Node::new(
@@ -115,6 +124,8 @@ impl Parser<'_> {
 					}
 					scope.help = Some(self.tokenizer.next_token()?);
 				}
+				TokenType::ARG_REQ => self.parse_argdef(scope, NodeType::ARG_REQ)?,
+				TokenType::ARG_OPT => self.parse_argdef(scope, NodeType::ARG_OPT)?,
 				_ => panic!("Encountered unexpected Token: {}", next),
 			}
 		}

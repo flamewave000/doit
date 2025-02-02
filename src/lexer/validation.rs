@@ -8,7 +8,7 @@ pub fn is_number(value: &char) -> bool {
 
 /** first char must be alpha, subsequent chars can be '_' or digits */
 pub fn is_nomenclature(value: &char, first: bool) -> bool {
-	value.is_alphabetic() || (!first && (value.is_numeric() || *value == '_'))
+	value.is_alphabetic() || (!first && (value.is_numeric() || *value == '_' || *value == '-'))
 }
 
 #[cfg(test)]

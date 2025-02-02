@@ -4,6 +4,16 @@ pub const DOIT_HEADER: &str = r#"#include <unordered_map>
 namespace doit {
 	typedef ::std::unordered_map<::std::string, ::std::string> args_map;
 	inline ::std::string to_string(::std::string __val) { return __val; }
+	struct __target_help_args {
+		bool required;
+		::std::string arg_name;
+		::std::string arg_help;
+	};
+	struct __target_help {
+		::std::string target_name;
+		::std::string target_help;
+		::std::vector<__target_help_args> target_args;
+	};
 	::std::string to_string(double __val) {
 		auto result = ::std::to_string(__val);
 		size_t end = result.find_last_not_of('0');
@@ -16,6 +26,17 @@ namespace doit {
 		auto last = text.find_last_not_of(" \t\n\r\f\v");
 		if (first == ::std::string::npos || last == ::std::string::npos) return text;
 		return text.substr(first, (last - first) + 1);
+	}
+	void print_tabbed_text(const ::uint16_t tabwidth, const bool clip_start, const ::std::string &text) {
+		::std::string line;
+		::std::stringstream is = ::std::stringstream(text);
+		if (clip_start) {
+			::std::getline(is, line);
+			printf("  %s\n", ::doit::trim(line).c_str());
+		}
+		while (::std::getline(is, line)) {
+			printf("  %*s  %s\n", tabwidth, "", ::doit::trim(line).c_str());
+		}
 	}
 	::std::string inject(::std::string fmt, int argc, const char *argv[], args_map vars) {
 		::std::ostringstream os;
@@ -119,8 +140,8 @@ namespace script {
 #undef __VARS
 #undef __SYSTEM
 
-#define __HELP(target, help) {#target, ::doit::trim(help)}
-typedef ::std::pair<::std::string, ::std::string> __target_help;
+#define __ARG(req, arg, help) ::doit::__target_help_args{req, arg, ::doit::trim(help)}
+#define __HELP(target, help, ...) {#target, ::doit::trim(help), {__VA_ARGS__}}
 void print_help() {
 	::std::string line;
 	::std::stringstream is;
@@ -133,19 +154,32 @@ void print_help() {
 		}
 	}
 	printf("\nTARGETS\n");
-	::std::vector<__target_help> targets = {{{{TARGET_HELPS}}}
+	::std::vector<::doit::__target_help> targets = {{{{TARGET_HELPS}}}
 	};
 	int largest = 0;
-	::std::sort(targets.begin(), targets.end(), [&largest](__target_help a, __target_help b) {
-		largest = ::std::max(largest, ::std::max((int)a.first.size(), (int)b.first.size()));
-		return a.first.compare(b.first);
+	::std::sort(targets.begin(), targets.end(), [&largest](const ::doit::__target_help &a, const ::doit::__target_help &b) {
+		largest = ::std::max(largest, ::std::max((int)a.target_name.size(), (int)b.target_name.size()));
+		return a.target_name < b.target_name;
 	});
 	for (auto target : targets) {
-		is = ::std::stringstream(target.second);
-		::std::getline(is, line);
-		printf("  %*s  %s\n", largest, target.first.c_str(), line.c_str());
-		while (::std::getline(is, line)) {
-			printf("  %*s  %s\n", largest, "", line.c_str());
+		printf("  %*s", largest, target.target_name.c_str());
+		if (target.target_args.size() == 0) {
+			::doit::print_tabbed_text(largest, true, target.target_help.c_str());
+			continue;
+		}
+		int largest_arg = 0;
+		for (auto arg : target.target_args) {
+			if (arg.required)
+				printf(" <%s>", arg.arg_name.c_str());
+			else
+				printf(" [%s]", arg.arg_name.c_str());
+			largest_arg = ::std::max(largest_arg, (int)arg.arg_name.size());
+		}
+		::std::cout << ::std::endl;
+		::doit::print_tabbed_text(largest, false, target.target_help.c_str());
+		for (auto arg : target.target_args) {
+			printf("%*s", largest + largest_arg + 4, arg.arg_name.c_str());
+			::doit::print_tabbed_text(largest + largest_arg + 2, true, arg.arg_help.c_str());
 		}
 	}
 }

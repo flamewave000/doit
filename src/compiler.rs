@@ -45,7 +45,7 @@ pub fn build(directory: &String, filename: &str, keep: bool, force: bool, mode: 
 	}
 	fs::write(directory.to_owned() + "/hash", new_hash.to_string())?;
 
-	match &mode {
+	match mode {
 		CompileMode::PRINT_TOKENS => print_tokens(&mut Lexer::new(filename, &source)),
 		CompileMode::PRINT_NODES => print_nodes(&mut Parser::new(&mut Lexer::new(filename, &source))),
 		_ => {

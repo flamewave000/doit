@@ -13,6 +13,8 @@
    Help Block: [HELP_BEG]    [...]     [HELP_END]
  Script Block: [SCRIPT_BEG]  [...]     [SCRIPT_END]
 Comment Block: [COMMENT_BEG] [...]     [COMMENT_END]
+ Required Arg: [ARG_REQ]     [NOMEN]   [HELP] [EXPR] [EOL]
+ Optional Arg: [ARG_OPT]     [NOMEN]   [HELP] [EXPR] [EOL]
 ```
 
 ## Artifacts
@@ -163,5 +165,32 @@ build { # Comments can occur at the end of any line
 	# Or on their own lines
 	$ echo "This runs in the shell" # Or at the end of script lines
 }
+```
+
+### Req/Opt Arguments
+
+Arguments that are required for a specific target can be declared using the `req` and `opt` keywords. These are fairly simple and are just semantics. They provide additional documentation in the DOIT help message generation, and we can check to make sure a minimum number of arguments are provided based on the number of required args (optionals are ignored).
+
+```
+build {
+	@ Build the project
+	opt -r @ Creates an optimized release build
+	$ cargo build $@
+}
+
+> doit
+
+Usage: doit <target> [args...]
+       Project builder
+
+TARGETS
+     lint  Test project
+     test  Test project
+    clean  Clean Project
+    build  Build the project
+
+ARGS
+    build [-r]
+        -r  Creates an optimized release build
 ```
 
