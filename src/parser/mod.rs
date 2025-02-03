@@ -215,6 +215,18 @@ mod tests {
 				(TokenType::EOL, None),
 				(TokenType::HELP, some("\thelp2\t")),
 				(TokenType::EOL, None),
+
+				(TokenType::ARG_REQ, some("-a")),
+				(TokenType::EOL, None),
+				(TokenType::ARG_REQ, some("-b")),
+				(TokenType::HELP, some("help3")),
+				(TokenType::EOL, None),
+				(TokenType::ARG_OPT, some("-c")),
+				(TokenType::EOL, None),
+				(TokenType::ARG_OPT, some("-d")),
+				(TokenType::HELP, some("help4")),
+				(TokenType::EOL, None),
+
 				(TokenType::SCRIPT, some("script1")),
 				(TokenType::EOL, None),
 				(TokenType::COMMENT, some("comment2")),
@@ -235,13 +247,21 @@ mod tests {
 		check_node(root.children.first(), NodeType::COMMENT, "comment1");
 		check_node(root.children.get(1), NodeType::TARGET, "test1");
 		check_help(root.children.get(1), "\thelp2\t");
+
+		check_node(root.children.get(1).unwrap().children.first(), NodeType::ARG_REQ, "-a");
+		check_node(root.children.get(1).unwrap().children.get(1), NodeType::ARG_REQ, "-b");
+		check_help(root.children.get(1).unwrap().children.get(1), "help3");
+		check_node(root.children.get(1).unwrap().children.get(2), NodeType::ARG_OPT, "-c");
+		check_node(root.children.get(1).unwrap().children.get(3), NodeType::ARG_OPT, "-d");
+		check_help(root.children.get(1).unwrap().children.get(3), "help4");
+
 		check_node(
-			root.children.get(1).unwrap().children.first(),
+			root.children.get(1).unwrap().children.get(4),
 			NodeType::SCRIPT,
 			"script1",
 		);
 		check_node(
-			root.children.get(1).unwrap().children.get(1),
+			root.children.get(1).unwrap().children.get(5),
 			NodeType::COMMENT,
 			"comment2",
 		);
