@@ -235,6 +235,10 @@ test1 {
 	@@@
 	help2
 	@@@
+	req -a
+	req -b @ help3
+	opt -c
+	opt -d @ help4
 	$ script1
 	# comment2
 }
@@ -250,6 +254,16 @@ test2: script2
 		check(lexer.next_token()?, TokenType::TGT_BEG, "");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::HELP, "\thelp2\t");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::ARG_REQ, "-a");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::ARG_REQ, "-b");
+		check(lexer.next_token()?, TokenType::HELP, "help3");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::ARG_OPT, "-c");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::ARG_OPT, "-d");
+		check(lexer.next_token()?, TokenType::HELP, "help4");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::SCRIPT, "script1");
 		check(lexer.next_token()?, TokenType::EOL, "");

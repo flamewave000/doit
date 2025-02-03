@@ -29,6 +29,6 @@ mod tests {
 	fn test_is_nomenclature() {
 		"abcdefghijklmnopqrstuvwxyz0123456789_".chars().for_each(|c|assert!(is_nomenclature(&c, false)));
 		"abcdefghijklmnopqrstuvwxyz".chars().for_each(|c|assert!(is_nomenclature(&c, true)));
-		" \r\n\t!@#$%^&*()-=`~'\":;/\\,<>+".chars().for_each(|c|assert!(!is_nomenclature(&c, false)));
+		" \r\n\t!@#$%^&*()=`~'\":;/\\,<>+".chars().for_each(|c|assert!(!is_nomenclature(&c, false)));
 	}
 }

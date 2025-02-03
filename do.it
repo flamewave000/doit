@@ -20,6 +20,12 @@ lint {
 	@ Test project
 	$ cargo clippy --all-targets --all-features -- -D warnings $@
 }
+commit {
+	@ Run all required steps before comitting
+	$ doit test
+	$ doit lint
+	$ git commit
+}
 pack {
 	@ Pack the binaries into a zip and tarball
 	$$$
