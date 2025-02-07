@@ -19,7 +19,7 @@
 					"kind": "bin"
 				}
 			},
-			"args": ["-t", "test-files/do.it", "-f", "--tokens"],
+			"args": ["-t", "test-files/do.it", "-f", "target3"],
 			"cwd": "${workspaceFolder}"
 		},
 		{

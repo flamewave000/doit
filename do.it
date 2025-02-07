@@ -56,4 +56,5 @@ pack {
 	$$$
 }
 
-tryit:$ cargo build && ./target/debug/doit -t test-files/do.it $@
+# Adding the "|| exit" on the end causes the script to propogate the error from the previous command to our script result
+tryit:$ cargo build && ./target/debug/doit -t test-files/do.it $@ || exit

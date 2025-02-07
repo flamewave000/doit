@@ -40,6 +40,14 @@ target3 {
 	echo "$$my_var"
 	echo "$global_var"
 	$$$
+
+	$ exit 0
+	yield
+	$ echo "This should be hit"
+
+	$ exit 42
+	yield
+	$ echo "This should not be hit"
 }
 
 target4: $ echo "single line target"

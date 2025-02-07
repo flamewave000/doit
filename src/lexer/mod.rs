@@ -142,6 +142,7 @@ impl Lexer<'_> {
 				"exit" => Ok(Token::sym(TokenType::EXIT)),
 				"req" => self.consume_argdef(TokenType::ARG_REQ),
 				"opt" => self.consume_argdef(TokenType::ARG_OPT),
+				"yield" => Ok(Token::sym(TokenType::YIELD)),
 				_ => Ok(Token::val(TokenType::NOMEN, Some(symbol))),
 			}
 		} else if next == '"' {
@@ -245,6 +246,8 @@ test1 {
 	$$$
 	script2
 	$$$
+	yield
+	exit
 	# comment2
 	% python1
 	%%%
@@ -278,6 +281,10 @@ test3:% python3
 		check(lexer.next_token()?, TokenType::SCR_SH, "script1");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::SCR_SH, "script2");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::YIELD, "");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::EXIT, "");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::COMMENT, " comment2");
 		check(lexer.next_token()?, TokenType::EOL, "");

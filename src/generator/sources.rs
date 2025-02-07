@@ -2,6 +2,9 @@ pub const DOIT_HEADER: &str = r#"#include <unordered_map>
 #include <sstream>
 #include <regex>
 namespace doit {
+	int EXIT_CODE = 0;
+	void exit(int override = -1) { ::exit(override < 0 ? EXIT_CODE : override); }
+	void yield() { if (EXIT_CODE > 0) exit(EXIT_CODE); }
 	typedef ::std::unordered_map<::std::string, ::std::string> args_map;
 	inline ::std::string to_string(::std::string __val) { return __val; }
 	struct __target_help_args {
@@ -134,10 +137,11 @@ pub const SOURCE_FILE: &str = r#"#include <iostream>
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <sys/wait.h>
 
 #define __VAR(variable) {#variable, ::doit::to_string(variable)}
-#define __SYSTEM_SH(statement, vars) system(::doit::inject(statement, argc, argv, vars).c_str())
-#define __SYSTEM_PY(statement, vars) system(("cat <<__EOF__ | python3\n" + ::doit::inject(statement, argc, argv, vars) + "\n__EOF__\n").c_str())
+#define __SYSTEM_SH(statement, vars) ::doit::EXIT_CODE = WEXITSTATUS(system(::doit::inject(statement, argc, argv, vars).c_str()))
+#define __SYSTEM_PY(statement, vars) ::doit::EXIT_CODE = WEXITSTATUS(system(("cat <<__EOF__ | python3\n" + ::doit::inject(statement, argc, argv, vars) + "\n__EOF__\n").c_str()))
 namespace script {
 {{{TARGET_DEFINITIONS}}}
 }
@@ -202,7 +206,7 @@ int main(int argc, const char *argv[]) {
 		printf("Invalid target name: %s\nUsage: doit <target> [args...]\n", argv[1]);
 		return EXIT_FAILURE;
 	}
-	return EXIT_SUCCESS;
+	return ::doit::EXIT_CODE;
 }
 #undef MATCH
 "#;

@@ -4,6 +4,7 @@
                Node Definitions
          Root: [SOF]         [...]     [EOF]
          Exit: [EXIT]        [EXPR]    [EOL]
+        Yield: [YIELD]       [EOL]
        Assign: [NOMEN]       [ASSIGN]  [EXPR]   [EOL]
        Target: [NOMEN]       [TGT_BEG] [...]    [EOL]  [TGT_END]
    SLE Target: [NOMEN]       [TGT_SLE] [SYMBOL] [EXPR] [EOL]
@@ -53,6 +54,24 @@ exit 1
 exit my_result
 exit 1+my_result
 ```
+
+### Yield
+
+The yield command checks the current `EXIT_CODE` state and performs an early exit if it is non-zero. The `EXIT_CODE` value is overrwritten by each invocation of a script. If the script exits with a non-zero code, you can early return and DOIT will also exit that same code. This allows you to propogate errors from internal scripts to outside callers.
+
+```sh
+my_target {
+	$ exit 0
+	yield
+	$ echo "This will be printed"
+
+	$ exit 42
+	yield
+	$ echo "This will not get printed"
+}
+```
+
+If the above example were to be executed with this command: `doit my_target`, the first `echo` will print and the second will not. The doit program will also exit with the code `42`.
 
 ### Help Statement
 

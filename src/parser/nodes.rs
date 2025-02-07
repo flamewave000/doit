@@ -8,6 +8,7 @@ use crate::lexer::token::Token;
 pub enum NodeType {
 	ROOT,
 	EXIT,
+	YIELD,
 	ASSIGN,
 	TARGET,
 	SCR_SH,

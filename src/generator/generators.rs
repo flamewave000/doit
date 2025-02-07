@@ -70,7 +70,10 @@ pub fn generate_comment(node: &Node) -> Result<String, Error> {
 }
 pub fn generate_exit(node: &Node) -> Result<String, Error> {
 	let expression: Vec<&str> = node.children.iter().map(node_value).collect();
-	Ok(format!("exit({});\n", expression.join(" ")))
+	Ok(format!("::doit::exit({});\n", expression.join(" ")))
+}
+pub fn generate_yield() -> Result<String, Error> {
+	Ok(String::from("::doit::yield();\n"))
 }
 
 #[cfg(test)]
@@ -181,14 +184,14 @@ mod tests {
 			Token::val(TokenType::LIT_NUM, some("42")),
 		)];
 		let result = generate_exit(&node)?;
-		assert_eq!(result, "exit(42);\n");
+		assert_eq!(result, "::doit::exit(42);\n");
 		node.children = vec![
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("my_var"))),
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::SYMBOL, some("+"))),
 			Node::single(NodeType::SYMBOL, Token::val(TokenType::LIT_NUM, some("21"))),
 		];
 		let result = generate_exit(&node)?;
-		assert_eq!(result, "exit(my_var + 21);\n");
+		assert_eq!(result, "::doit::exit(my_var + 21);\n");
 		Ok(())
 	}
 }
