@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use std::{
-	env, fs, path::Path, process::{exit, Command}
+	env, fs, path::Path, process::{exit, Command, ExitCode}
 };
 
 mod compiler;
@@ -29,7 +29,7 @@ fn print_help(program_name: &str) {
 	println!("    --keep     After compiling, do not delete the .doit/targets.cpp file.");
 }
 
-fn main() {
+fn main() -> ExitCode {
 	let mut args: Vec<String> = env::args().collect();
 	let program_name = args.remove(0);
 	let mut force_recompile = false;
@@ -58,7 +58,7 @@ fn main() {
 				if Path::new("./.doit").exists() {
 					if let Err(err) = fs::remove_dir_all("./.doit") {
 						log::error(&err.to_string());
-						exit(1);
+						return ExitCode::from(1);
 					}
 				}
 				log::info("Cleaned!");
@@ -67,7 +67,7 @@ fn main() {
 			fail => {
 				log::error(&format!("Unknown option: {}", fail));
 				print_help(&program_name);
-				exit(1);
+				return ExitCode::from(1);
 			}
 		}
 	}
@@ -85,19 +85,19 @@ fn main() {
 				filename = path_str.to_owned();
 			} else {
 				log::error(&format!("Could not calculate and absolute path for the provided doit file '{}'", filename));
-				exit(1);
+				return ExitCode::from(1);
 			}
 		},
 		Err(err) => {
 			log::error(&format!("Could not calculate and absolute path for the provided doit file '{}'", filename));
 			log::error(&err.to_string());
-			exit(1);
+			return ExitCode::from(1);
 		}
 	}
 
 	if !Path::new(&filename).exists() {
 		log::error(&format!("Could not find '{}' file in current directory", filename));
-		exit(1);
+		return ExitCode::from(1);
 	}
 
 	let directory = &format!("./.doit/{}", utils::hash::calculate_hash(&filename));
@@ -119,21 +119,26 @@ fn main() {
 		},
 	) {
 		log::error(&err.to_string());
-		exit(1);
+		return ExitCode::from(1);
 	}
 	if print_tokens || print_nodes || print_source {
-		exit(0);
+		return ExitCode::from(0);
 	}
 
 	let child = Command::new(directory.to_owned() + "/targets").args(&args).spawn();
 	if let Err(err) = child {
 		log::error(&err.to_string());
+		ExitCode::from(0)
 	} else {
 		match child.unwrap().wait() {
-			Ok(status) => exit(status.code().unwrap_or(if status.success() { 0 } else { 1 })),
+			Ok(status) => {
+				let code = status.code().unwrap_or(if status.success() { 0 } else { 1 });
+				println!("Exit Code: {}", code);
+				ExitCode::from(code as u8)
+			},
 			Err(err) => {
 				log::error(&err.to_string());
-				exit(1);
+				ExitCode::from(1)
 			}
 		}
 	}

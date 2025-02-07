@@ -94,15 +94,19 @@ impl Parser<'_> {
 				TokenType::EOL => {
 					self.tokenizer.next_token()?;
 					continue;
-				}
+				},
 				TokenType::EOF | TokenType::TGT_END => {
 					self.tokenizer.next_token()?;
 					return Ok(());
-				}
+				},
 				TokenType::EXIT => scope.children.push(Node::new(
 					NodeType::EXIT,
 					self.tokenizer.next_token()?,
 					self.parse_expression()?,
+				)),
+				TokenType::YIELD => scope.children.push(Node::single(
+					NodeType::YIELD,
+					self.tokenizer.next_token()?,
 				)),
 				TokenType::NOMEN => self.parse_nomenclature(scope)?,
 				TokenType::SCR_SH => scope.children.push(Node::new(
@@ -235,6 +239,8 @@ mod tests {
 				(TokenType::COMMENT, some("comment2")),
 				(TokenType::EOL, None),
 				(TokenType::SCR_PY, some("python1")),
+				(TokenType::EOL, None),
+				(TokenType::YIELD, None),
 				(TokenType::EOL, None),
 				(TokenType::TGT_END, None),
 				(TokenType::EOL, None),

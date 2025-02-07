@@ -8,7 +8,7 @@ use crate::parser::{
 	Parser,
 };
 
-use self::generators::{generate_comment, generate_exit, generate_script_sh, generate_script_py, generate_variable, node_value};
+use self::generators::{generate_comment, generate_exit, generate_yield, generate_script_sh, generate_script_py, generate_variable, node_value};
 
 mod generators;
 mod sources;
@@ -50,6 +50,10 @@ impl Generator<'_> {
 				NodeType::EXIT => {
 					result.push_str(indent);
 					result.push_str(&generate_exit(node)?);
+				}
+				NodeType::YIELD => {
+					result.push_str(indent);
+					result.push_str(&generate_yield()?);
 				}
 				NodeType::ASSIGN => {
 					let var_name = node.value.value.as_ref().unwrap();

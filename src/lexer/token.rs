@@ -9,6 +9,7 @@ pub enum TokenType {
 	EOL,     // \n
 	SYMBOL,  // /+-*%^&@!.:;'`~
 	EXIT,    // exit
+	YIELD,   // yield
 	LIT_NUM, // 42
 	LIT_STR, // "abc"
 	COMMENT, // #
