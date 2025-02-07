@@ -4,17 +4,17 @@
                Node Definitions
          Root: [SOF]         [...]     [EOF]
          Exit: [EXIT]        [EXPR]    [EOL]
-       Assign: [NOMEN]       [ASSIGN]  [EXPR] [EOL]
-       Target: [NOMEN]       [TGT_BEG] [...]  [EOL] [TGT_END]
-   SLE Target: [NOMEN]       [TGT_SLE] [EXPR] [EOL]
+       Assign: [NOMEN]       [ASSIGN]  [EXPR]   [EOL]
+       Target: [NOMEN]       [TGT_BEG] [...]    [EOL]  [TGT_END]
+   SLE Target: [NOMEN]       [TGT_SLE] [SYMBOL] [EXPR] [EOL]
          Help: [HELP]        [EXPR]    [EOL]
        Script: [SCRIPT]      [EXPR]    [EOL]
       Comment: [COMMENT]     [EXPR]    [EOL]
    Help Block: [HELP_BEG]    [...]     [HELP_END]
  Script Block: [SCRIPT_BEG]  [...]     [SCRIPT_END]
 Comment Block: [COMMENT_BEG] [...]     [COMMENT_END]
- Required Arg: [ARG_REQ]     [NOMEN]   [HELP] [EXPR] [EOL]
- Optional Arg: [ARG_OPT]     [NOMEN]   [HELP] [EXPR] [EOL]
+ Required Arg: [ARG_REQ]     [NOMEN]   [HELP]   [EXPR] [EOL]
+ Optional Arg: [ARG_OPT]     [NOMEN]   [HELP]   [EXPR] [EOL]
 ```
 
 ## Artifacts
@@ -117,12 +117,33 @@ run
 {
 	[...]
 }
-clean: [EXPR]
+clean: $ [EXPR]
+test: % [EXPR]
 ```
 
 ### Script
 
-Script commands are denoted by a single `$` for single line scripts, or can be surrounded by `$$$` for a script block. These scripts are run on the system via the C/C++ `system()` call. These are essentially converted to raw-strings. They can contain variables which are used by prefacing the variable name with a single `$` or for better distinction, can be contained within `$(...)`. This is useful if the tail of the variable is beside an alphanumeric character. Arguments passed in from the console can also be accessed using the `$1` style variables. If you wish to reference an environment variable, you can use a double `$$` for the variable reference. The double `$$` will be converted to a single `$` when the script is run.
+Script commands are denoted by a single `$` for single line shell scripts, or can be surrounded by `$$$` for a shell script block. Python scripts are declared with `%` and python script block with `%%%`.
+
+These scripts are run on the system via the C/C++ `system()` call. These are essentially converted to raw-strings. They can contain variables which are used by prefacing the variable name with a single `$` or for better distinction, can be contained within `$(...)`. This is useful if the tail of the variable is beside an alphanumeric character. Arguments passed in from the console can also be accessed using the `$1` style variables. If you wish to reference an environment variable, you can use a double `$$` for the variable reference. The double `$$` will be converted to a single `$` when the script is run.
+
+```sh
+my_target1 {
+	$ echo "Single line shell script"
+	$$$
+	echo "shell script block"
+	echo "can utilize multiline"
+	$$$
+
+	% print('single line python script')
+	%%%
+	print('shell script block')
+	print('can utilize multiline')
+	%%%
+}
+my_target1: $ echo "Single line target using shell script"
+my_target1: % print('Single line target using python script')
+```
 
 #### CLI Args Expansion
 

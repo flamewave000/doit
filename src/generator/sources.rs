@@ -132,7 +132,8 @@ pub const SOURCE_FILE: &str = r#"#include <iostream>
 #include <algorithm>
 
 #define __VAR(variable) {#variable, ::doit::to_string(variable)}
-#define __SYSTEM(statement, vars) system(::doit::inject(statement, argc, argv, vars).c_str())
+#define __SYSTEM_SH(statement, vars) system(::doit::inject(statement, argc, argv, vars).c_str())
+#define __SYSTEM_PY(statement, vars) system(("cat <<__EOF__ | python3\n" + ::doit::inject(statement, argc, argv, vars) + "\n__EOF__\n").c_str())
 namespace script {
 {{{TARGET_DEFINITIONS}}}
 }

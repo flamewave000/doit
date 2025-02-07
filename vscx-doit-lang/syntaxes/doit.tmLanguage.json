@@ -5,7 +5,10 @@
 		{ "include": "#keywords" },
 		{ "include": "#strings" },
 		{ "include": "#targets" },
-		{ "include": "#scripts" },
+		{ "include": "#scripts.shell.single" },
+		{ "include": "#scripts.shell.block" },
+		{ "include": "#scripts.python.single" },
+		{ "include": "#scripts.python.block" },
 		{ "include": "#variables" },
 		{ "include": "#comment.single" },
 		{ "include": "#comment.block" },
@@ -63,9 +66,27 @@
 			"begin": "@@@",
 			"end": "@@@"
 		},
-		"scripts": {
+		"scripts.shell.single": {
 			"name": "entity.name.class.doit",
-			"match": "^\\s*(\\${1,3})"
+			"match": "$[^$][^$].*",
+			"patterns": [ { "include": "source.shellscript" } ]
+		},
+		"scripts.shell.block": {
+			"name": "entity.name.class.doit",
+			"begin": "$$$",
+			"end": "$$$",
+			"patterns": [ { "include": "source.shellscript" } ]
+		},
+		"scripts.python.single": {
+			"name": "entity.name.class.doit",
+			"match": "%[^%][^%].*",
+			"patterns": [ { "include": "source.python" } ]
+		},
+		"scripts.python.block": {
+			"name": "entity.name.class.doit",
+			"begin": "%%%",
+			"end": "%%%",
+			"patterns": [ { "include": "source.python" } ]
 		}
 	},
 	"scopeName": "source.doit"
