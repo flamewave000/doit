@@ -144,7 +144,7 @@ pub fn read_script(consumer: &mut dyn Consumer, delimiter: char) -> Result<Vec<c
 	// ignore the first '$' character
 	consumer.consume_and_ignore()?;
 	scan_whitespace(consumer)?;
-	conditional_reader(consumer, |x| *x != '\n')
+	conditional_reader(consumer, |x| *x != '\n' && *x != '\0')
 }
 
 pub fn convert_help_block_escapes(parsed: Result<Vec<char>, String>) -> Result<Vec<char>, String> {
