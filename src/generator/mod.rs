@@ -8,7 +8,7 @@ use crate::parser::{
 	Parser,
 };
 
-use self::generators::{generate_comment, generate_exit, generate_script, generate_variable, node_value};
+use self::generators::{generate_comment, generate_exit, generate_script_sh, generate_script_py, generate_variable, node_value};
 
 mod generators;
 mod sources;
@@ -98,9 +98,13 @@ impl Generator<'_> {
 					)?);
 					result.push_str(&format!("{}}}\n", indent));
 				}
-				NodeType::SCRIPT => {
+				NodeType::SCR_SH => {
 					result.push_str(indent);
-					result.push_str(&generate_script(node, &locals)?);
+					result.push_str(&generate_script_sh(node, &locals)?);
+				}
+				NodeType::SCR_PY => {
+					result.push_str(indent);
+					result.push_str(&generate_script_py(node, &locals)?);
 				}
 				NodeType::COMMENT => {
 					result.push_str(indent);

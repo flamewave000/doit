@@ -130,16 +130,16 @@ fn read_delimited_block(consumer: &mut dyn Consumer, delimiter: char, ttype: Tok
 
 pub fn read_comment(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
 	if consumer.look_ahead(1).unwrap_or('\0') == '#' && consumer.look_ahead(2).unwrap_or('\0') == '#' {
-		return read_delimited_block(consumer, '#', TokenType::SCRIPT);
+		return read_delimited_block(consumer, '#', TokenType::SCR_SH);
 	}
 	// ignore the first '#' character
 	consumer.consume_and_ignore()?;
 	conditional_reader(consumer, |x| *x != '\n')
 }
 
-pub fn read_script(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
-	if consumer.look_ahead(1).unwrap_or('\0') == '$' && consumer.look_ahead(2).unwrap_or('\0') == '$' {
-		return read_delimited_block(consumer, '$', TokenType::SCRIPT);
+pub fn read_script(consumer: &mut dyn Consumer, delimiter: char) -> Result<Vec<char>, String> {
+	if consumer.look_ahead(1).unwrap_or('\0') == delimiter && consumer.look_ahead(2).unwrap_or('\0') == delimiter {
+		return read_delimited_block(consumer, delimiter, TokenType::SCR_SH);
 	}
 	// ignore the first '$' character
 	consumer.consume_and_ignore()?;
@@ -186,6 +186,13 @@ mod tests {
 	use crate::lexer::lexers::{read_comment, read_help_block, read_nomenclature, read_script, read_string, convert_help_block_escapes};
 
 	use super::{read_number, scan_whitespace, Consumer};
+
+	fn read_script_sh(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
+		read_script(consumer, '$')
+	}
+	fn read_script_py(consumer: &mut dyn Consumer) -> Result<Vec<char>, String> {
+		read_script(consumer, '%')
+	}
 
 	struct MockConsumer {
 		pub index: usize,
@@ -279,14 +286,24 @@ mod tests {
 		);
 	}
 	#[test]
-	fn test_read_script() {
-		assert_eq!(run_test(read_script, "$ echo 1234 | cat  \n"), "echo 1234 | cat  ");
+	fn test_read_script_sh() {
+		assert_eq!(run_test(read_script_sh, "$ echo 1234 | cat  \n"), "echo 1234 | cat  ");
 		assert_eq!(
 			run_test(
-				read_script,
+				read_script_sh,
 				"$$$\necho 1234 | cat\necho hello world\n$$$\n nothing here   "
 			),
 			"echo 1234 | cat\necho hello world",
+		);
+	}
+	fn test_read_script_py() {
+		assert_eq!(run_test(read_script_sh, "% print(\"hello world\")  \n"), "print(\"hello world\")  ");
+		assert_eq!(
+			run_test(
+				read_script_sh,
+				"%%%\noutput='1234'\nprint(output)\n%%%\n nothing here   "
+			),
+			"output='1234'\nprint(output)",
 		);
 	}
 	#[test]

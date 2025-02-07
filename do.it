@@ -26,6 +26,7 @@ commit {
 	$ doit lint
 	$ git commit
 }
+
 pack {
 	@ Pack the binaries into a zip and tarball
 	$$$
@@ -54,4 +55,5 @@ pack {
 	cd - > /dev/null
 	$$$
 }
-# compile_test: cd test-files && doit -f --keep $@
+
+tryit:$ cargo build && ./target/debug/doit -t test-files/do.it $@

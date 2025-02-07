@@ -10,7 +10,7 @@ namespace script {
 	double my_value = 42;
 	// this is a comment and everything to the end of the line is ignored
 	void build(int argc, const char *argv[]) {
-		__SYSTEM(R"__DOIT__(echo "hello $1, how are you? Here is my value: $(my_value)" | cat)__DOIT__", {__VAR(my_value)});
+		__SYSTEM_SH(R"__DOIT__(echo "hello $1, how are you? Here is my value: $(my_value)" | cat)__DOIT__", {__VAR(my_value)});
 	}
 	void clean(int argc, const char *argv[]) {
 		__SYSTEM(R"__DOIT__(

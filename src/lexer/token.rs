@@ -12,7 +12,8 @@ pub enum TokenType {
 	LIT_NUM, // 42
 	LIT_STR, // "abc"
 	COMMENT, // #
-	SCRIPT,  // $
+	SCR_SH,  // $ $$$
+	SCR_PY,  // % %%%
 	TGT_BEG, // {
 	TGT_END, // }
 	TGT_SLE, // :

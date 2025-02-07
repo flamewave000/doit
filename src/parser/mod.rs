@@ -59,7 +59,7 @@ impl Parser<'_> {
 					scope.children.push(block);
 				}
 				TokenType::TGT_SLE => {
-					let script = Node::single(NodeType::SCRIPT, self.tokenizer.next_token()?);
+					let script = Node::single(NodeType::SCR_SH, self.tokenizer.next_token()?);
 					scope.children.push(Node::new(NodeType::TARGET, name, vec![script]));
 				}
 				token => {
@@ -105,8 +105,13 @@ impl Parser<'_> {
 					self.parse_expression()?,
 				)),
 				TokenType::NOMEN => self.parse_nomenclature(scope)?,
-				TokenType::SCRIPT => scope.children.push(Node::new(
-					NodeType::SCRIPT,
+				TokenType::SCR_SH => scope.children.push(Node::new(
+					NodeType::SCR_SH,
+					self.tokenizer.next_token()?,
+					self.parse_expression()?,
+				)),
+				TokenType::SCR_PY => scope.children.push(Node::new(
+					NodeType::SCR_PY,
 					self.tokenizer.next_token()?,
 					self.parse_expression()?,
 				)),
@@ -215,7 +220,6 @@ mod tests {
 				(TokenType::EOL, None),
 				(TokenType::HELP, some("\thelp2\t")),
 				(TokenType::EOL, None),
-
 				(TokenType::ARG_REQ, some("-a")),
 				(TokenType::EOL, None),
 				(TokenType::ARG_REQ, some("-b")),
@@ -226,16 +230,17 @@ mod tests {
 				(TokenType::ARG_OPT, some("-d")),
 				(TokenType::HELP, some("help4")),
 				(TokenType::EOL, None),
-
-				(TokenType::SCRIPT, some("script1")),
+				(TokenType::SCR_SH, some("script1")),
 				(TokenType::EOL, None),
 				(TokenType::COMMENT, some("comment2")),
+				(TokenType::EOL, None),
+				(TokenType::SCR_PY, some("python1")),
 				(TokenType::EOL, None),
 				(TokenType::TGT_END, None),
 				(TokenType::EOL, None),
 				(TokenType::NOMEN, some("test2")),
 				(TokenType::TGT_SLE, None),
-				(TokenType::SCRIPT, some("script2")),
+				(TokenType::SCR_SH, some("script2")),
 				(TokenType::EOL, None),
 				(TokenType::EOF, None),
 			],
@@ -257,7 +262,7 @@ mod tests {
 
 		check_node(
 			root.children.get(1).unwrap().children.get(4),
-			NodeType::SCRIPT,
+			NodeType::SCR_SH,
 			"script1",
 		);
 		check_node(
@@ -265,11 +270,16 @@ mod tests {
 			NodeType::COMMENT,
 			"comment2",
 		);
+		check_node(
+			root.children.get(1).unwrap().children.get(6),
+			NodeType::SCR_PY,
+			"python1",
+		);
 		check_node(root.children.get(2), NodeType::TARGET, "test2");
 		assert!(root.children.get(2).unwrap().help.is_none());
 		check_node(
 			root.children.get(2).unwrap().children.first(),
-			NodeType::SCRIPT,
+			NodeType::SCR_SH,
 			"script2",
 		);
 		Ok(())

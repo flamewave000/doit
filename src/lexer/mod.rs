@@ -153,9 +153,13 @@ impl Lexer<'_> {
 			let value = self.handle_error(result)?;
 			Ok(Token::val(TokenType::COMMENT, Some(value)))
 		} else if next == '$' {
-			let result = read_script(self);
+			let result = read_script(self, '$');
 			let value = self.handle_error(result)?.trim().to_string();
-			Ok(Token::val(TokenType::SCRIPT, Some(value)))
+			Ok(Token::val(TokenType::SCR_SH, Some(value)))
+		} else if next == '%' {
+			let result = read_script(self, '%');
+			let value = self.handle_error(result)?.trim().to_string();
+			Ok(Token::val(TokenType::SCR_PY, Some(value)))
 		} else if next == '{' {
 			self.consume_and_ignore()?;
 			Ok(Token::sym(TokenType::TGT_BEG))
@@ -163,9 +167,7 @@ impl Lexer<'_> {
 			self.consume_and_ignore()?;
 			Ok(Token::sym(TokenType::TGT_END))
 		} else if next == ':' {
-			// We are swapping the ':' for a '$' to force a script token on the next iteration.
-			// This essentially creates an implicit script tag for SLE targets.
-			self.source[self.index] = '$';
+			self.consume_and_ignore()?;
 			Ok(Token::sym(TokenType::TGT_SLE))
 		} else if next == '=' {
 			self.consume_and_ignore()?;
@@ -240,9 +242,16 @@ test1 {
 	opt -c
 	opt -d @ help4
 	$ script1
+	$$$
+	script2
+	$$$
 	# comment2
+	% python1
+	%%%
+	python2
+	%%%
 }
-test2: script2
+test2: script3
 ",
 		);
 		check(lexer.next_token()?, TokenType::SOF, "");
@@ -265,15 +274,21 @@ test2: script2
 		check(lexer.next_token()?, TokenType::ARG_OPT, "-d");
 		check(lexer.next_token()?, TokenType::HELP, "help4");
 		check(lexer.next_token()?, TokenType::EOL, "");
-		check(lexer.next_token()?, TokenType::SCRIPT, "script1");
+		check(lexer.next_token()?, TokenType::SCR_SH, "script1");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::SCR_SH, "script2");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::COMMENT, " comment2");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::SCR_PY, "python1");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::SCR_PY, "python2");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::TGT_END, "");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::NOMEN, "test2");
 		check(lexer.next_token()?, TokenType::TGT_SLE, "");
-		check(lexer.next_token()?, TokenType::SCRIPT, "script2");
+		check(lexer.next_token()?, TokenType::SCR_SH, "script3");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::EOF, "");
 		Ok(())

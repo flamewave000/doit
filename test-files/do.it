@@ -27,7 +27,7 @@ target2 {
 	echo "\$$(my_value) = $(my_value)"
 	$$$
 }
-target3: echo "single line target"
+target3: $ echo "single line target"
 
 ###
 Multiline comment
