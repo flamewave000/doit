@@ -59,6 +59,10 @@ namespace doit {
 				}
 				return oss.str();
 			}
+			// If we are matching the number of CLI arguments
+			if (key.size() == 1 && key[0] == '#') {
+				return (::std::ostringstream() << (argc - 1)).str();
+			}
 			::std::regex pattern("(\\d+):(\\d+)?");
 			::std::smatch matches;
 			// If we are matching a range af CLI args
@@ -89,7 +93,7 @@ namespace doit {
 					else
 						token += fmt[c];
 				} else {
-					if (!isalnum(fmt[c]) && fmt[c] != '_' && fmt[c] != '@') {
+					if (!isalnum(fmt[c]) && fmt[c] != '_' && fmt[c] != '@' && fmt[c] != '#') {
 						parsing = false;
 						os << get(token) << fmt[c];
 						token = "";

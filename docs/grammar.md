@@ -170,6 +170,9 @@ my_target {
 	# Expands all CLI args into the script
 	$ echo "$@"
 
+	# Injects the number of arguments passed in
+	$ echo "$#"
+
 	# Expands all CLI args from index 2, to index 5 inclusively
 	$ echo "$(2:5)"
 	# Expands all CLI args from index 2, to the last index inclusively
