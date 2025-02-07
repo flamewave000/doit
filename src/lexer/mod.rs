@@ -251,7 +251,8 @@ test1 {
 	python2
 	%%%
 }
-test2: script3
+test2:$ script3
+test3:% python3
 ",
 		);
 		check(lexer.next_token()?, TokenType::SOF, "");
@@ -289,6 +290,10 @@ test2: script3
 		check(lexer.next_token()?, TokenType::NOMEN, "test2");
 		check(lexer.next_token()?, TokenType::TGT_SLE, "");
 		check(lexer.next_token()?, TokenType::SCR_SH, "script3");
+		check(lexer.next_token()?, TokenType::EOL, "");
+		check(lexer.next_token()?, TokenType::NOMEN, "test3");
+		check(lexer.next_token()?, TokenType::TGT_SLE, "");
+		check(lexer.next_token()?, TokenType::SCR_PY, "python3");
 		check(lexer.next_token()?, TokenType::EOL, "");
 		check(lexer.next_token()?, TokenType::EOF, "");
 		Ok(())

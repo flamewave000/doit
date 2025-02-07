@@ -27,13 +27,12 @@ target2 {
 	echo "\$$(my_value) = $(my_value)"
 	$$$
 }
-target3: $ echo "single line target"
 
 ###
 Multiline comment
 ###
 
-target4 {
+target3 {
 	$ echo "$global_var"
 	global_var = 24
 	$$$
@@ -42,3 +41,5 @@ target4 {
 	echo "$global_var"
 	$$$
 }
+
+target4: $ echo "single line target"
