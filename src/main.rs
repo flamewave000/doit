@@ -133,7 +133,7 @@ fn main() -> ExitCode {
 		match child.unwrap().wait() {
 			Ok(status) => {
 				let code = status.code().unwrap_or(if status.success() { 0 } else { 1 });
-				println!("Exit Code: {}", code);
+				log::debug(&format!("Exit Code: {}", code));
 				ExitCode::from(code as u8)
 			},
 			Err(err) => {
