@@ -14,19 +14,20 @@ use compiler::CompileMode;
 use crate::utils::log;
 
 fn print_help(program_name: &str) {
-	println!("Usage: {} [options] <target> [target_params]\n", program_name);
+	println!("\x1b[32mUsage: \x1b[33m{} \x1b[90m[options] \x1b[34m<target> \x1b[90m[target_params]\x1b[0m\n", program_name);
 	println!("If the target is ommitted, command will print out a list of available targets.");
 	println!();
-	println!("  Options:");
-	println!("    -f         Force recompile of do.it script.");
-	println!("    -t <file>  Provide a file path to the do.it file if not in CWD.");
-	println!("    -c         Clean the current directory by removing the .doit directory.");
+	println!("\x1b[32m  Options:\x1b[0m");
+	println!("    \x1b[90m-f\x1b[0m         Force recompile of do.it script.");
+	println!("    \x1b[90m-t <file>\x1b[0m  Provide a file path to the do.it file if not in CWD.");
+	println!("    \x1b[90m-c\x1b[0m         Clean the current directory by removing the .doit directory.");
 	println!();
-	println!("  Dev Options:");
-	println!("    --tokens   Print out the lexical tokens instead of fully compiling.");
-	println!("    --nodes    Print out the parser node tree instead of fully compiling.");
-	println!("    --source   Print the transpiled C++ code to stdout instead of fully compiling.");
-	println!("    --keep     After compiling, do not delete the .doit/targets.cpp file.");
+	println!("\x1b[32m  Dev Options:\x1b[0m");
+	println!("    \x1b[90m--tokens\x1b[0m   Print out the lexical tokens instead of fully compiling.");
+	println!("    \x1b[90m--nodes\x1b[0m    Print out the parser node tree instead of fully compiling.");
+	println!("    \x1b[90m--source\x1b[0m   Print the transpiled C++ code to stdout instead of fully compiling.");
+	println!("    \x1b[90m--keep\x1b[0m     After compiling, do not delete the .doit/targets.cpp file.");
+	println!("    \x1b[90m--help\x1b[0m     Prints out this help message.");
 }
 
 fn main() -> ExitCode {

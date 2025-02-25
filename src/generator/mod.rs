@@ -72,7 +72,7 @@ impl Generator<'_> {
 						target_help: node.help
 							.as_ref()
 							.and_then(|h| h.value.as_ref())
-							.unwrap_or(&"<No help defined>".to_string())
+							.unwrap_or(&"\x1b[90m<No help defined>\x1b[0m".to_string())
 							.clone(),
 						target_args: node.children.iter()
 						.filter(|it| { it.ntype == NodeType::ARG_REQ || it.ntype == NodeType::ARG_OPT })
@@ -89,7 +89,7 @@ impl Generator<'_> {
 								required,
 								arg_name: it.value.value.clone().expect("argument missing name"),
 								arg_help: it.help.as_ref().and_then(|h| h.value.as_ref())
-										.unwrap_or(&"<No help defined>".to_string())
+										.unwrap_or(&"\x1b[90m<No help defined>\x1b[0m".to_string())
 										.clone(),
 							}
 						}).collect(),
