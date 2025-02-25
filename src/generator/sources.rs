@@ -154,7 +154,7 @@ namespace script {
 void print_help() {
 	::std::string line;
 	::std::stringstream is;
-	printf("Usage: doit <target> [args...]\n");
+	printf("\e[32mUsage: \e[33mdoit \e[34m<target> \e[90m[args...]\e[0m\n");
 	auto help_description = ::doit::trim(R"__DOIT__({{{ROOT_HELP}}})__DOIT__");
 	if (help_description.size() > 0) {
 		is = ::std::stringstream(help_description);
@@ -162,7 +162,7 @@ void print_help() {
 			printf("       %s\n", line.c_str());
 		}
 	}
-	printf("\nTARGETS\n");
+	printf("\n\e[32mTARGETS\e[0m\n");
 	::std::vector<::doit::__target_help> targets = {{{{TARGET_HELPS}}}
 	};
 	int largest = 0;
@@ -171,7 +171,7 @@ void print_help() {
 		return a.target_name < b.target_name;
 	});
 	for (auto target : targets) {
-		printf("  %*s", largest, target.target_name.c_str());
+		printf("\e[34m  %*s\e[0m", largest, target.target_name.c_str());
 		if (target.target_args.size() == 0) {
 			::doit::print_tabbed_text(largest, true, target.target_help.c_str());
 			continue;
@@ -179,15 +179,15 @@ void print_help() {
 		int largest_arg = 0;
 		for (auto arg : target.target_args) {
 			if (arg.required)
-				printf(" <%s>", arg.arg_name.c_str());
+				printf("\e[90m <%s>\e[0m", arg.arg_name.c_str());
 			else
-				printf(" [%s]", arg.arg_name.c_str());
+				printf("\e[90m [%s]\e[0m", arg.arg_name.c_str());
 			largest_arg = ::std::max(largest_arg, (int)arg.arg_name.size());
 		}
 		::std::cout << ::std::endl;
 		::doit::print_tabbed_text(largest, false, target.target_help.c_str());
 		for (auto arg : target.target_args) {
-			printf("%*s", largest + largest_arg + 4, arg.arg_name.c_str());
+			printf("\e[90m%*s\e[0m", largest + largest_arg + 4, arg.arg_name.c_str());
 			::doit::print_tabbed_text(largest + largest_arg + 2, true, arg.arg_help.c_str());
 		}
 	}
@@ -203,7 +203,7 @@ int main(int argc, const char *argv[]) {
 	if (!strcmp(argv[1], "--help"))
 		print_help();{{{TARGET_MATCHES}}}
 	else {
-		printf("Invalid target name: %s\nUsage: doit <target> [args...]\n", argv[1]);
+		printf("\e[91mInvalid target name: \e[33m%s\e[0m\n\e[32mUsage: \e[34mdoit <target> [args...]\e[0m\n", argv[1]);
 		return EXIT_FAILURE;
 	}
 	return ::doit::EXIT_CODE;
