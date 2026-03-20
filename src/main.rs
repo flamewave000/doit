@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use std::{
-	env, fs, path::Path, process::{exit, Command, ExitCode}
+	env, fs,
+	path::Path,
+	process::{Command, ExitCode, exit},
 };
 
 mod compiler;
@@ -14,7 +16,10 @@ use compiler::CompileMode;
 use crate::utils::log;
 
 fn print_help(program_name: &str) {
-	println!("\x1b[32mUsage: \x1b[33m{} \x1b[90m[options] \x1b[34m<target> \x1b[90m[target_params]\x1b[0m\n", program_name);
+	println!(
+		"\x1b[32mUsage: \x1b[33m{} \x1b[90m[options] \x1b[34m<target> \x1b[90m[target_params]\x1b[0m\n",
+		program_name
+	);
 	println!("If the target is ommitted, command will print out a list of available targets.");
 	println!();
 	println!("\x1b[32m  Options:\x1b[0m");
@@ -50,34 +55,35 @@ fn main() -> ExitCode {
 			"--keep" => keep_source = true,
 			"--targets" => print_targets = true,
 			"--completion" => {
-				println!("{}", r##"#!/bin/bash
-_doit_completions() {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
+				println!(
+					r##"#!/bin/bash
+_doit_completions() {{
+	local cur="${{COMP_WORDS[COMP_CWORD]}}"
 	local opts=$(doit -f --targets)
 	COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
-}
-complete -F _doit_completions doit"##);
+}}
+complete -F _doit_completions doit"##
+				);
 				exit(0);
-			},
+			}
 			"--help" => {
 				print_help(&program_name);
 				exit(0);
-			},
+			}
 			"--version" => {
 				println!("v{}", env!("CARGO_PKG_VERSION"));
 				exit(0);
-			},
+			}
 			"-t" => filename = args.remove(0),
 			"-c" => {
-				if Path::new("./.doit").exists() {
-					if let Err(err) = fs::remove_dir_all("./.doit") {
-						log::error(&err.to_string());
-						return ExitCode::from(1);
-					}
+				if Path::new("./.doit").exists()
+					&& let Err(err) = fs::remove_dir_all("./.doit") {
+					log::error(&err.to_string());
+					return ExitCode::from(1);
 				}
 				log::info("Cleaned!");
 				exit(0);
-			},
+			}
 			fail => {
 				log::error(&format!("Unknown option: {}", fail));
 				print_help(&program_name);
@@ -98,12 +104,18 @@ complete -F _doit_completions doit"##);
 			if let Some(path_str) = path.to_str() {
 				filename = path_str.to_owned();
 			} else {
-				log::error(&format!("Could not calculate and absolute path for the provided doit file '{}'", filename));
+				log::error(&format!(
+					"Could not calculate and absolute path for the provided doit file '{}'",
+					filename
+				));
 				return ExitCode::from(1);
 			}
-		},
+		}
 		Err(err) => {
-			log::error(&format!("Could not calculate and absolute path for the provided doit file '{}'", filename));
+			log::error(&format!(
+				"Could not calculate and absolute path for the provided doit file '{}'",
+				filename
+			));
 			log::error(&err.to_string());
 			return ExitCode::from(1);
 		}
@@ -151,7 +163,7 @@ complete -F _doit_completions doit"##);
 				let code = status.code().unwrap_or(if status.success() { 0 } else { 1 });
 				log::debug(&format!("Exit Code: {}", code));
 				ExitCode::from(code as u8)
-			},
+			}
 			Err(err) => {
 				log::error(&err.to_string());
 				ExitCode::from(1)
