@@ -126,8 +126,7 @@ impl Parser<'_> {
 				)),
 				TokenType::HELP => {
 					if scope.help.is_some() {
-						return Err(Error::new(
-							ErrorKind::Other,
+						return Err(Error::other(
 							"Help block has already been defined for the current scope.",
 						));
 					}
