@@ -73,7 +73,7 @@ impl Lexer<'_> {
 	fn consume_and_ignore(&mut self) -> Result<(), Error> {
 		match self.consume() {
 			Ok(_) => Ok(()),
-			Err(err) => Err(Error::new(ErrorKind::Other, err)),
+			Err(err) => Err(Error::other(err)),
 		}
 	}
 

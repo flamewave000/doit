@@ -27,6 +27,7 @@ fn print_help(program_name: &str) {
 	println!("    \x1b[90m--nodes\x1b[0m    Print out the parser node tree instead of fully compiling.");
 	println!("    \x1b[90m--source\x1b[0m   Print the transpiled C++ code to stdout instead of fully compiling.");
 	println!("    \x1b[90m--keep\x1b[0m     After compiling, do not delete the .doit/targets.cpp file.");
+	println!("    \x1b[90m--targets\x1b[0m  Print the targets to stdout. Used for autocompletion.");
 	println!("    \x1b[90m--help\x1b[0m     Prints out this help message.");
 }
 
@@ -37,6 +38,7 @@ fn main() -> ExitCode {
 	let mut print_tokens = false;
 	let mut print_nodes = false;
 	let mut print_source = false;
+	let mut print_targets = false;
 	let mut keep_source = false;
 	let mut filename: String = String::new();
 	while !args.is_empty() && args[0].starts_with('-') {
@@ -46,6 +48,7 @@ fn main() -> ExitCode {
 			"--nodes" => print_nodes = true,
 			"--source" => print_source = true,
 			"--keep" => keep_source = true,
+			"--targets" => print_targets = true,
 			"--help" => {
 				print_help(&program_name);
 				exit(0);
@@ -115,6 +118,8 @@ fn main() -> ExitCode {
 			CompileMode::PRINT_NODES
 		} else if print_source {
 			CompileMode::PRINT_SOURCE
+		} else if print_targets {
+			CompileMode::PRINT_TARGETS
 		} else {
 			CompileMode::NORMAL
 		},
@@ -122,7 +127,7 @@ fn main() -> ExitCode {
 		log::error(&err.to_string());
 		return ExitCode::from(1);
 	}
-	if print_tokens || print_nodes || print_source {
+	if print_tokens || print_nodes || print_source || print_targets {
 		return ExitCode::from(0);
 	}
 

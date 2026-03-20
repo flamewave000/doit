@@ -1,7 +1,7 @@
 use std::{
 	fs::{self, File},
 	hash::{DefaultHasher, Hash, Hasher},
-	io::{Error, ErrorKind, Read, Write},
+	io::{Error, Read, Write},
 	path::Path,
 	process::Command,
 };
@@ -9,10 +9,10 @@ use std::{
 use crate::{
 	generator::Generator,
 	lexer::{
-		token::{TokenType, Tokenizer},
 		Lexer,
+		token::{TokenType, Tokenizer},
 	},
-	parser::Parser,
+	parser::{Parser, nodes::NodeType},
 	utils::log,
 };
 
@@ -23,6 +23,7 @@ pub enum CompileMode {
 	PRINT_TOKENS,
 	PRINT_NODES,
 	PRINT_SOURCE,
+	PRINT_TARGETS,
 }
 
 pub fn build(directory: &String, filename: &str, keep: bool, force: bool, mode: CompileMode) -> Result<(), Error> {
@@ -37,7 +38,10 @@ pub fn build(directory: &String, filename: &str, keep: bool, force: bool, mode: 
 	let mut hasher = DefaultHasher::new();
 	source.hash(&mut hasher);
 	let new_hash = hasher.finish();
-	if !force && Path::new(&(directory.to_owned() + "/hash")).exists() && Path::new(&(directory.to_owned() + "/targets")).exists() {
+	if !force
+		&& Path::new(&(directory.to_owned() + "/hash")).exists()
+		&& Path::new(&(directory.to_owned() + "/targets")).exists()
+	{
 		let old_hash = fs::read_to_string(directory.to_owned() + "/hash")?;
 		if old_hash == new_hash.to_string() {
 			return Ok(());
@@ -48,6 +52,7 @@ pub fn build(directory: &String, filename: &str, keep: bool, force: bool, mode: 
 	match mode {
 		CompileMode::PRINT_TOKENS => print_tokens(&mut Lexer::new(filename, &source)),
 		CompileMode::PRINT_NODES => print_nodes(&mut Parser::new(&mut Lexer::new(filename, &source))),
+		CompileMode::PRINT_TARGETS => print_targets(&mut Parser::new(&mut Lexer::new(filename, &source))),
 		_ => {
 			let mut lexer = Lexer::new(filename, &source);
 			let mut parser = Parser::new(&mut lexer);
@@ -78,7 +83,7 @@ fn compile(directory: &String, source: &str) -> Result<(), Error> {
 		.args(["--std=c++20", cpp, "-o", &(directory.to_owned() + "/targets")])
 		.spawn()?;
 	if !output.wait()?.success() {
-		return Err(Error::new(ErrorKind::Other, "Failed to compile"));
+		return Err(Error::other("Failed to compile"));
 	}
 	Ok(())
 }
@@ -100,6 +105,22 @@ fn print_tokens(lexer: &mut Lexer) {
 fn print_nodes(parser: &mut Parser) {
 	match parser.parse() {
 		Ok(root) => root.to_string().trim().split('\n').for_each(log::info),
+		Err(err) => log::error(&format!("Failed to parse: {}", err)),
+	};
+}
+
+fn print_targets(parser: &mut Parser) {
+	match parser.parse() {
+		Ok(root) => {
+			let mut filtered: Vec<String> = root
+				.children
+				.into_iter()
+				.filter(|node| node.ntype == NodeType::TARGET)
+				.filter_map(|node| node.value.value)
+				.collect();
+			filtered.sort();
+			filtered.into_iter().for_each(|n| println!("{}", n));
+		}
 		Err(err) => log::error(&format!("Failed to parse: {}", err)),
 	};
 }
