@@ -49,6 +49,16 @@ fn main() -> ExitCode {
 			"--source" => print_source = true,
 			"--keep" => keep_source = true,
 			"--targets" => print_targets = true,
+			"--completion" => {
+				println!("{}", r##"#!/bin/bash
+_doit_completions() {
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local opts=$(doit -f --targets)
+	COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+}
+complete -F _doit_completions doit"##);
+				exit(0);
+			},
 			"--help" => {
 				print_help(&program_name);
 				exit(0);

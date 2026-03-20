@@ -18,6 +18,15 @@ So I know you can just use something like a Makefile to build things, but I get 
 1. Download executable.
 2. Copy to `/usr/local/bin` or place somewhere and link it like above.
 
+### Bash Autocompletion
+
+DOIT supports target auto-completion in bash. This allows you to `doit <TAB><TAB>` and get a list of target options, as well as autocompletion for partial entries (ie. `doit cl<TAB><TAB>` will autocomplete to `doit clean` if "clean" is a valid target in your DOIT script.).
+
+To get auto-completion, simply add the following to your local `.bashrc` file.
+```sh
+. <(doit --completion)
+```
+
 ## Build
 
 Simple run the following commands in the project folder. Requires no additional crates or dependencies to build.
